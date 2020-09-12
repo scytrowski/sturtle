@@ -10,3 +10,7 @@ trait EventHandler[S, E, F[_]] {
 
   def handle(state: S, event: E): F[S]
 }
+
+object EventHandler {
+  def apply[S, E, F[_]](f: (S, E) => F[S]): EventHandler[S, E, F] = (state: S, event: E) => f(state, event)
+}
