@@ -1,16 +1,16 @@
 package com.github.scytrowski.sturtle.turtle
 
 import cats.Id
-import com.github.scytrowski.sturtle.geometry.{Angle, Position, Vector}
+import com.github.scytrowski.sturtle.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.turtle.TurtleCommand.{MoveBackward, MoveBy, MoveForward, MoveTo, RotateLeftBy, RotateRightBy, RotateTo}
 import com.github.scytrowski.sturtle.turtle.TurtleEvent.{MovedBackward, MovedBy, MovedForward, MovedTo, RotatedLeftBy, RotatedRightBy, RotatedTo}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class TurtleCommandTest extends AnyWordSpec with Matchers {
-  private val position = Position(1, 2)
-  private val vector = Vector(3, 4)
-  private val angle = Angle(0.123)
+  private val position = Point.cartesian(1, 2)
+  private val vector = Vector.cartesian(3, 4)
+  private val angle = Angle.radians(0.123)
 
   "TurtleCommand" when {
 
