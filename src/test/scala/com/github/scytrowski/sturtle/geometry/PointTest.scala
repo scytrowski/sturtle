@@ -1,9 +1,8 @@
 package com.github.scytrowski.sturtle.geometry
 
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import com.github.scytrowski.sturtle.fixture.CommonSpecLike
 
-class PointTest extends AnyWordSpec with Matchers {
+class PointTest extends CommonSpecLike {
   "Point" when {
 
     "cartesian" should {

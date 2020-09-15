@@ -1,12 +1,11 @@
 package com.github.scytrowski.sturtle.turtle
 
 import cats.Id
+import com.github.scytrowski.sturtle.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.geometry.{Angle, Point, Vector}
-import com.github.scytrowski.sturtle.turtle.TurtleEvent.{MovedBackward, MovedBy, MovedForward, MovedTo, RotatedLeftBy, RotatedRightBy, RotatedTo}
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import com.github.scytrowski.sturtle.turtle.TurtleEvent._
 
-class TurtleEventTest extends AnyWordSpec with Matchers {
+class TurtleEventTest extends CommonSpecLike {
   "TurtleEvent" when {
 
     "handle" should {

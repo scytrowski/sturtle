@@ -1,9 +1,8 @@
 package com.github.scytrowski.sturtle.geometry
 
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import com.github.scytrowski.sturtle.fixture.CommonSpecLike
 
-class VectorTest extends AnyWordSpec with Matchers {
+class VectorTest extends CommonSpecLike {
   "Vector" when {
 
     "cartesian" should {
