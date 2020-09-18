@@ -19,6 +19,12 @@ lazy val geometry = (project in file("geometry"))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
   )
 
+lazy val graphics = (project in file("graphics"))
+  .settings(
+    // https://mvnrepository.com/artifact/org.scalatest/scalatest
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
+  )
+
 lazy val es = (project in file("es"))
   .settings(
     // https://mvnrepository.com/artifact/org.typelevel/cats-core
@@ -39,4 +45,4 @@ lazy val core = (project in file("core"))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test,
     scalacOptions += "-Ypartial-unification"
   )
-  .dependsOn(geometry, es)
+  .dependsOn(geometry, graphics, es)

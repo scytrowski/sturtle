@@ -5,11 +5,13 @@ import com.github.scytrowski.sturtle.core.TurtleCommand._
 import com.github.scytrowski.sturtle.core.TurtleEvent._
 import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.geometry.{Angle, Point, Vector}
+import com.github.scytrowski.sturtle.graphics.Color
 
 class TurtleCommandTest extends CommonSpecLike {
   private val position = Point.cartesian(1, 2)
   private val vector = Vector.cartesian(3, 4)
   private val angle = Angle.radians(0.123)
+  private val color = Color.rgb(127, 15, 13)
 
   "TurtleCommand" when {
 
@@ -41,6 +43,30 @@ class TurtleCommandTest extends CommonSpecLike {
 
       "convert RotateRightBy correctly" in {
         convert(RotateRightBy(angle)) mustBe List(RotatedRightBy(angle))
+      }
+
+      "convert Fill correctly" in {
+        convert(Fill) mustBe List(Filled)
+      }
+
+      "convert ClearPath correctly" in {
+        convert(ClearPath) mustBe List(ClearedPath)
+      }
+
+      "convert PenDown correctly" in {
+        convert(PenDown) mustBe List(SetPenDown)
+      }
+
+      "convert PenUp correctly" in {
+        convert(PenUp) mustBe List(SetPenUp)
+      }
+
+      "convert SetPenColor correctly" in {
+        convert(SetPenColor(color)) mustBe List(SetPenColorEvent(color))
+      }
+
+      "convert SetFillColor correctly" in {
+        convert(SetFillColor(color)) mustBe List(SetFillColorEvent(color))
       }
 
     }
