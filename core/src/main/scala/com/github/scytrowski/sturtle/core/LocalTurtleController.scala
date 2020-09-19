@@ -15,6 +15,12 @@ final class LocalTurtleController[F[_]: Monad] private(val id: String,
       updatedTurtle <- eventSourcing.run(turtle, command)
       _             <- turtleRef.set(updatedTurtle)
     } yield ()
+
+  override def execute(query: TurtleQuery): F[query.Answer] =
+    for {
+      turtle <- turtleRef.get
+      answer <- eventSourcing.execute(turtle, query)
+    } yield answer
 }
 
 object LocalTurtleController {

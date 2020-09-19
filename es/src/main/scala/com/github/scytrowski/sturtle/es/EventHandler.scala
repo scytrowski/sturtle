@@ -16,7 +16,7 @@ trait EventHandler[S, E, F[_]] {
     val ef: (S, E) => F[S] = (s, e) =>
       for {
         s1 <- handle(s, e)
-        s2 <- handle(s1, e)
+        s2 <- other.handle(s1, e)
       } yield s2
     EventHandler(ef)
   }

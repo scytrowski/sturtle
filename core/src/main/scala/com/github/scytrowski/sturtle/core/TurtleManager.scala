@@ -21,5 +21,5 @@ object TurtleManager {
   }
 
   private def description[F[_]: Applicative]: TurtleEventSourcingDescription[F] =
-    EventSourcingDescription(Turtle.initial, TurtleCommand.handler, TurtleEvent.handler)
+    EventSourcingDescription(Turtle.initial, TurtleCommand.handler, TurtleEvent.handler, TurtleQuery.handler)
 }
