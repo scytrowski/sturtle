@@ -1,7 +1,7 @@
 package com.github.scytrowski.sturtle.core.fixture
 
 import cats.Id
-import cats.effect.{ExitCase, Sync}
+import cats.effect.{Concurrent, ExitCase, Fiber, Sync}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
