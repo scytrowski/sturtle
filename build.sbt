@@ -46,3 +46,12 @@ lazy val core = (project in file("core"))
     scalacOptions += "-Ypartial-unification"
   )
   .dependsOn(geometry, graphics, es)
+
+lazy val logging = (project in file("logging"))
+  .settings(
+    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-core
+    libraryDependencies += "io.chrisdavenport" %% "log4cats-core" % "1.1.1",
+    // https://mvnrepository.com/artifact/org.scalatest/scalatest
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
+  )
+  .dependsOn(es, core)

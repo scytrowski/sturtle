@@ -11,7 +11,7 @@ final class TurtleManager[F[_]: Sync] private(eventSourcing: TurtleEventSourcing
 }
 
 object TurtleManager {
-  def resource[F[_]: Sync](extensions: List[TurtleExtension]): Resource[F, TurtleManager[F]] = {
+  def resource[F[_]: Sync](extensions: List[TurtleExtension[F]]): Resource[F, TurtleManager[F]] = {
     val desc = description[F]
     NonEmptyList
       .of(Resource.pure(EventSourcing.basic(desc)), extensions.map(_.eventSourcing(desc)):_*)
