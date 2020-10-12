@@ -1,11 +1,12 @@
 package com.github.scytrowski.sturtle.core
 
 import cats.Applicative
+import com.github.scytrowski.sturtle.core.TurtleQueryAnswer._
 import com.github.scytrowski.sturtle.es.{Query, QueryHandler}
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point}
-import com.github.scytrowski.sturtle.graphics.Color
 
-sealed abstract class TurtleQuery extends Query[Turtle]
+sealed abstract class TurtleQuery extends Query[Turtle] {
+  final override type Answer = TurtleQueryAnswer
+}
 
 object TurtleQuery {
   def handler[F[_]: Applicative]: QueryHandler[Turtle, TurtleQuery, F] =
@@ -15,27 +16,21 @@ object TurtleQuery {
     }
 
   case object GetPosition extends TurtleQuery {
-    override type Answer = Point
-    override def extractAnswer(state: Turtle): Point = state.position
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = PositionAnswer(state.position)
   }
   case object GetAngle extends TurtleQuery {
-    override type Answer = Angle
-    override def extractAnswer(state: Turtle): Angle = state.angle
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = AngleAnswer(state.angle)
   }
   case object GetPath extends TurtleQuery {
-    override type Answer = Path
-    override def extractAnswer(state: Turtle): Path = state.path
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = PathAnswer(state.path)
   }
   case object GetPenState extends TurtleQuery {
-    override type Answer = PenState
-    override def extractAnswer(state: Turtle): PenState = state.penState
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = PenStateAnswer(state.penState)
   }
   case object GetPenColor extends TurtleQuery {
-    override type Answer = Color
-    override def extractAnswer(state: Turtle): Color = state.penColor
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = PenColorAnswer(state.penColor)
   }
   case object GetFillColor extends TurtleQuery {
-    override type Answer = Color
-    override def extractAnswer(state: Turtle): Color = state.fillColor
+    override def extractAnswer(state: Turtle): TurtleQueryAnswer = FillColorAnswer(state.fillColor)
   }
 }

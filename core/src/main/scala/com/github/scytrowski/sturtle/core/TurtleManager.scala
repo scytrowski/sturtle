@@ -7,11 +7,13 @@ import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.{Applicative, Monad}
 import com.github.scytrowski.sturtle.es.{EventSourcing, EventSourcingDescription}
+import com.github.scytrowski.sturtle.core.syntax.resource._
 
 final class TurtleManager[F[_]: Concurrent] private(eventSourcing: TurtleEventSourcing[F],
                                                     turtleLocks: MVar2[F, Map[String, Semaphore[F]]]) {
   def ref(id: String): F[TurtleRef[F]] =
-    retrieveLock(id).map(new LocalTurtleRef(id, eventSourcing, _))
+    retrieveLock(id)
+      .map(new LocalTurtleRef(id, eventSourcing, _))
 
   private def retrieveLock(id: String): F[Semaphore[F]] =
     turtleLocks.modify { locks =>
@@ -26,6 +28,13 @@ final class TurtleManager[F[_]: Concurrent] private(eventSourcing: TurtleEventSo
 
 object TurtleManager {
   def resource[F[_]: Concurrent](extensions: List[TurtleExtension[F]]): Resource[F, TurtleManager[F]] =
+    managerResource[F](extensions).flatTap { manager =>
+      extensions
+        .map(_.resource(manager))
+        .sequence
+    }
+
+  private def managerResource[F[_]: Concurrent](extensions: List[TurtleExtension[F]]): Resource[F, TurtleManager[F]] =
     for {
       es <- buildEventSourcing(extensions)
       locks <- createTurtleLocks

@@ -55,3 +55,26 @@ lazy val logging = (project in file("logging"))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
   )
   .dependsOn(es, core)
+
+lazy val remoting = (project in file("remoting"))
+  .settings(
+    // https://mvnrepository.com/artifact/org.http4s/http4s-blaze-server
+    libraryDependencies += "org.http4s" %% "http4s-blaze-server" % "0.21.7",
+    // https://mvnrepository.com/artifact/org.http4s/http4s-dsl
+    libraryDependencies += "org.http4s" %% "http4s-dsl" % "0.21.7",
+    // https://mvnrepository.com/artifact/org.scodec/scodec-core
+    libraryDependencies += "org.scodec" %% "scodec-core" % "1.11.7",
+    // https://mvnrepository.com/artifact/org.scodec/scodec-bits
+    libraryDependencies += "org.scodec" %% "scodec-bits" % "1.1.20",
+    // https://mvnrepository.com/artifact/org.scodec/scodec-stream
+    libraryDependencies += "org.scodec" %% "scodec-stream" % "2.0.0",
+    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-core
+    libraryDependencies += "io.chrisdavenport" %% "log4cats-core" % "1.1.1",
+    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-slf4j
+    libraryDependencies += "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1",
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.30",
+    // https://mvnrepository.com/artifact/org.scalatest/scalatest
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test,
+  )
+  .dependsOn(es, core)

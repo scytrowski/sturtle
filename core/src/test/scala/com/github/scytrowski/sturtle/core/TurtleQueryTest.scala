@@ -2,6 +2,7 @@ package com.github.scytrowski.sturtle.core
 
 import cats.Id
 import com.github.scytrowski.sturtle.core.TurtleQuery.{GetAngle, GetFillColor, GetPath, GetPenColor, GetPenState, GetPosition}
+import com.github.scytrowski.sturtle.core.TurtleQueryAnswer.{AngleAnswer, FillColorAnswer, PathAnswer, PenColorAnswer, PenStateAnswer, PositionAnswer}
 import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point}
 import com.github.scytrowski.sturtle.graphics.Color
@@ -17,7 +18,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetPosition, turtle)
 
-        result mustBe position
+        result mustBe PositionAnswer(position)
       }
 
       "handle GetAngle correctly" in {
@@ -26,7 +27,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetAngle, turtle)
 
-        result mustBe angle
+        result mustBe AngleAnswer(angle)
       }
 
       "handle GetPath correctly" in {
@@ -35,7 +36,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetPath, turtle)
 
-        result mustBe path
+        result mustBe PathAnswer(path)
       }
 
       "handle GetPenState correctly" in {
@@ -44,7 +45,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetPenState, turtle)
 
-        result mustBe penState
+        result mustBe PenStateAnswer(penState)
       }
 
       "handle GetPenColor correctly" in {
@@ -53,7 +54,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetPenColor, turtle)
 
-        result mustBe penColor
+        result mustBe PenColorAnswer(penColor)
       }
 
       "handle GetFillColor correctly" in {
@@ -62,7 +63,7 @@ class TurtleQueryTest extends CommonSpecLike {
 
         val result = handle(GetFillColor, turtle)
 
-        result mustBe fillColor
+        result mustBe FillColorAnswer(fillColor)
       }
 
     }
