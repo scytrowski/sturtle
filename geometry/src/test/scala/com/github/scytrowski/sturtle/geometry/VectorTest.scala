@@ -33,6 +33,18 @@ class VectorTest extends CommonSpecLike {
 
     }
 
+    "negate" should {
+
+      "yield correct result" in {
+        val vector = Vector(1, 2)
+
+        val result = vector.negate
+
+        result mustBe Vector.cartesian(-vector.dx, -vector.dy)
+      }
+
+    }
+
     "plus" should {
 
       "yield correct result" in {

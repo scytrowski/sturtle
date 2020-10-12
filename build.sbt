@@ -78,3 +78,6 @@ lazy val remoting = (project in file("remoting"))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test,
   )
   .dependsOn(es, core)
+
+lazy val persistence = (project in file("persistence"))
+  .dependsOn(es, core)

@@ -1,6 +1,9 @@
 package com.github.scytrowski.sturtle.geometry
 
 final case class Vector private(dx: Double, dy: Double) {
+  def negate: Vector = Vector(-dx, -dy)
+  def unary_- : Vector = negate
+
   def plus(other: Vector): Vector = Vector(dx + other.dx, dy + other.dy)
   def +(other: Vector): Vector = plus(other)
 

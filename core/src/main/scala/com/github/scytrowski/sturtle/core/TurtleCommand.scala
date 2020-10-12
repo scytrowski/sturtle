@@ -8,18 +8,28 @@ import com.github.scytrowski.sturtle.graphics.Color
 sealed abstract class TurtleCommand
 
 object TurtleCommand {
-  def handler[F[_]: Applicative]: CommandHandler[TurtleCommand, TurtleEvent, F] =
-    CommandHandler { cmd =>
+  def handler[F[_]: Applicative]: CommandHandler[Turtle, TurtleCommand, TurtleEvent, F] =
+    CommandHandler { case (turtle, cmd) =>
       Applicative[F].pure {
         List {
           cmd match {
-            case MoveTo(position) => TurtleEvent.MovedTo(position)
+            case MoveTo(position) =>
+              val vector = Vector.between(turtle.position, position)
+              TurtleEvent.MovedBy(vector)
             case MoveBy(vector) => TurtleEvent.MovedBy(vector)
-            case MoveForward(radius) => TurtleEvent.MovedForward(radius)
-            case MoveBackward(radius) => TurtleEvent.MovedBackward(radius)
-            case RotateTo(angle) => TurtleEvent.RotatedTo(angle)
-            case RotateLeftBy(angle) => TurtleEvent.RotatedLeftBy(angle)
-            case RotateRightBy(angle) => TurtleEvent.RotatedRightBy(angle)
+            case MoveForward(radius) =>
+              val vector = Vector.polar(radius, turtle.angle)
+              TurtleEvent.MovedBy(vector)
+            case MoveBackward(radius) =>
+              val vector = -Vector.polar(radius, turtle.angle)
+              TurtleEvent.MovedBy(vector)
+            case RotateTo(angle) =>
+              val by = angle - turtle.angle
+              TurtleEvent.RotatedBy(by)
+            case RotateLeftBy(angle) =>
+              TurtleEvent.RotatedBy(angle)
+            case RotateRightBy(angle) =>
+              TurtleEvent.RotatedBy(-angle)
             case Fill => TurtleEvent.Filled
             case ClearPath => TurtleEvent.ClearedPath
             case PenDown => TurtleEvent.SetPenDown

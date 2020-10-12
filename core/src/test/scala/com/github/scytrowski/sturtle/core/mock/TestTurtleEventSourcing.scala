@@ -14,7 +14,7 @@ object TestTurtleEventSourcing {
     EventSourcing.basic(testDescription(data))
 
   private def testDescription(data: Ref[Id, TestData]): TurtleEventSourcingDescription[Id] = {
-    val commandHandler = TurtleCommand.handler[Id] andThen CommandHandler(c => data.modify(data => (data.copy(commands = data.commands :+ c)) -> List.empty))
+    val commandHandler = TurtleCommand.handler[Id] andThen CommandHandler((_, c) => data.modify(data => (data.copy(commands = data.commands :+ c)) -> List.empty))
     val queryHandler = testQueryHandler(data)
     EventSourcingDescription(Turtle.initial, commandHandler, TurtleEvent.handler, queryHandler)
   }

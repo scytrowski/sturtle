@@ -1,6 +1,9 @@
 package com.github.scytrowski.sturtle.geometry
 
 final case class Angle private(value: Double) {
+  def negate: Angle = Angle.radians(-value)
+  def unary_- : Angle = negate
+
   def plus(other: Angle): Angle = Angle.radians(value + other.value)
   def +(other: Angle): Angle = plus(other)
 

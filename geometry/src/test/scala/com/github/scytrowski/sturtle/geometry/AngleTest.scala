@@ -37,6 +37,18 @@ class AngleTest extends CommonSpecLike {
 
     }
 
+    "negate" should {
+
+      "yield correct result" in {
+        val angle = Angle.radians(1.234)
+
+        val result = angle.negate
+
+        result mustBe Angle.radians(-angle.value)
+      }
+
+    }
+
     "plus" should {
 
       "yield correct result" in {

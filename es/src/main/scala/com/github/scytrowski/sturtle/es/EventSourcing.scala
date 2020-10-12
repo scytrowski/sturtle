@@ -11,7 +11,7 @@ abstract class EventSourcing[S, C, E, Q <: Query[S], F[_]: Monad](description: E
   final def run(state: S, command: C): F[S] =
     commandSink(command) >>
       description.commandHandler
-        .handle(command)
+        .handle(state, command)
         .flatTap(eventSink)
         .flatMap(description.eventHandler.handleMany(state, _))
 
