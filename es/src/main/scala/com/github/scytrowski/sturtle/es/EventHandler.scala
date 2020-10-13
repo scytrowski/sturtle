@@ -4,7 +4,7 @@ import cats.Monad
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
-trait EventHandler[S, E, F[_]] {
+trait EventHandler[F[_], S, E] {
   def handle(state: S, event: E): F[S]
 
   final def handleMany(initialState: S, events: List[E])(implicit F: Monad[F]): F[S] =
@@ -12,7 +12,7 @@ trait EventHandler[S, E, F[_]] {
       F.flatMap(f)(handle(_, event))
     }
 
-  final def andThen(other: EventHandler[S, E, F])(implicit F: Monad[F]): EventHandler[S, E, F] = {
+  final def andThen(other: EventHandler[F, S, E])(implicit F: Monad[F]): EventHandler[F, S, E] = {
     val ef: (S, E) => F[S] = (s, e) =>
       for {
         s1 <- handle(s, e)
@@ -23,5 +23,5 @@ trait EventHandler[S, E, F[_]] {
 }
 
 object EventHandler {
-  def apply[S, E, F[_]](f: (S, E) => F[S]): EventHandler[S, E, F] = (state: S, event: E) => f(state, event)
+  def apply[F[_], S, E](f: (S, E) => F[S]): EventHandler[F, S, E] = (state: S, event: E) => f(state, event)
 }

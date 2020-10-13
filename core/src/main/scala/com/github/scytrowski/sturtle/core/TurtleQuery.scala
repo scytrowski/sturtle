@@ -9,8 +9,8 @@ sealed abstract class TurtleQuery extends Query[Turtle] {
 }
 
 object TurtleQuery {
-  def handler[F[_]: Applicative]: QueryHandler[Turtle, TurtleQuery, F] =
-    new QueryHandler[Turtle, TurtleQuery, F] {
+  def handler[F[_]: Applicative]: QueryHandler[F, Turtle, TurtleQuery] =
+    new QueryHandler[F, Turtle, TurtleQuery] {
       override def handle(state: Turtle, query: TurtleQuery): F[query.Answer] =
         Applicative[F].pure(query.extractAnswer(state))
     }

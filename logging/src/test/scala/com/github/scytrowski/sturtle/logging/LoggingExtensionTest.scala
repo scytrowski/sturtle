@@ -6,7 +6,7 @@ import cats.syntax.flatMap._
 import cats.effect.concurrent.Ref
 import com.github.scytrowski.sturtle.core.{Turtle, TurtleEventSourcing}
 import com.github.scytrowski.sturtle.core.TurtleCommand.{MoveTo, RotateTo}
-import com.github.scytrowski.sturtle.core.TurtleEvent.RotatedTo
+import com.github.scytrowski.sturtle.core.TurtleEvent.RotatedBy
 import com.github.scytrowski.sturtle.core.TurtleQuery.GetFillColor
 import com.github.scytrowski.sturtle.geometry.{Angle, Point}
 import com.github.scytrowski.sturtle.logging.fixture.CommonSpecLike
@@ -33,7 +33,7 @@ class LoggingExtensionTest extends CommonSpecLike {
         es.run(Turtle.initial, command)
       }
 
-      data.events mustBe List(RotatedTo(angle))
+      data.events mustBe List(RotatedBy(angle))
     }
 
     "log query" in {

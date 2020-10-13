@@ -8,7 +8,7 @@ import com.github.scytrowski.sturtle.graphics.Color
 sealed abstract class TurtleEvent
 
 object TurtleEvent {
-  def handler[F[_]: Applicative]: EventHandler[Turtle, TurtleEvent, F] =
+  def handler[F[_]: Applicative]: EventHandler[F, Turtle, TurtleEvent] =
     EventHandler { case (turtle, event) =>
       Applicative[F].pure {
         event match {

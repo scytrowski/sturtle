@@ -8,7 +8,7 @@ import com.github.scytrowski.sturtle.graphics.Color
 sealed abstract class TurtleCommand
 
 object TurtleCommand {
-  def handler[F[_]: Applicative]: CommandHandler[Turtle, TurtleCommand, TurtleEvent, F] =
+  def handler[F[_]: Applicative]: CommandHandler[F, Turtle, TurtleCommand, TurtleEvent] =
     CommandHandler { case (turtle, cmd) =>
       Applicative[F].pure {
         List {

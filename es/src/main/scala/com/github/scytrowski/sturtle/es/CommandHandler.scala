@@ -5,7 +5,7 @@ import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.{Applicative, Monad}
 
-trait CommandHandler[S, C, E, F[_]] { self =>
+trait CommandHandler[F[_], S, C, E] { self =>
   def handle(state: S, command: C): F[List[E]]
 
   final def handleMany(state: S, commands: List[C])(implicit F: Applicative[F]): F[List[E]] =
@@ -13,7 +13,7 @@ trait CommandHandler[S, C, E, F[_]] { self =>
       .map(handle(state, _))
       .flatSequence
 
-  def andThen(other: CommandHandler[S, C, E, F])(implicit F: Monad[F]): CommandHandler[S, C, E, F] = {
+  def andThen(other: CommandHandler[F, S, C, E])(implicit F: Monad[F]): CommandHandler[F, S, C, E] = {
     val cf: (S, C) => F[List[E]] = {
       case (s, c) =>
         for {
@@ -26,5 +26,5 @@ trait CommandHandler[S, C, E, F[_]] { self =>
 }
 
 object CommandHandler {
-  def apply[S, C, E, F[_]](f: (S, C) => F[List[E]]): CommandHandler[S, C, E, F] = (state: S, command: C) => f(state, command)
+  def apply[F[_], S, C, E](f: (S, C) => F[List[E]]): CommandHandler[F, S, C, E] = (state: S, command: C) => f(state, command)
 }

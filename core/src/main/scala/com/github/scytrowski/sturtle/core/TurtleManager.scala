@@ -2,7 +2,7 @@ package com.github.scytrowski.sturtle.core
 
 import cats.data.NonEmptyList
 import cats.effect.concurrent.{MVar, MVar2, Semaphore}
-import cats.effect.{Concurrent, Resource}
+import cats.effect.{Concurrent, Resource, Sync}
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.{Applicative, Monad}
@@ -40,7 +40,7 @@ object TurtleManager {
       locks <- createTurtleLocks
     } yield new TurtleManager(es, locks)
 
-  private def buildEventSourcing[F[_]: Monad](extensions: List[TurtleExtension[F]]): Resource[F, TurtleEventSourcing[F]] = {
+  private def buildEventSourcing[F[_]: Sync](extensions: List[TurtleExtension[F]]): Resource[F, TurtleEventSourcing[F]] = {
     val desc = description[F]
     NonEmptyList
       .of(Resource.pure(EventSourcing.basic(desc)), extensions.map(_.eventSourcing(desc)):_*)

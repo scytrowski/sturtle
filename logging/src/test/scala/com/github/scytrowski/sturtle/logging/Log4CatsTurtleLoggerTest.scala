@@ -112,7 +112,7 @@ class Log4CatsTurtleLoggerTest extends CommonSpecLike {
   }
 
   private val command = TurtleCommand.MoveTo(Point.cartesian(-7, 18))
-  private val event = TurtleEvent.RotatedTo(Angle.radians(1.23))
+  private val event = TurtleEvent.RotatedBy(Angle.radians(1.23))
   private val query = TurtleQuery.GetPenState
 
   private def testCommandLogging(logLevel: LogLevel): TestLogger.TestData =
