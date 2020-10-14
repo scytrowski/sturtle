@@ -1,30 +1,32 @@
 package com.github.scytrowski.sturtle.core.mock
 
-import cats.Id
-import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.syntax.flatMap._
-import com.github.scytrowski.sturtle.core.{Turtle, TurtleCommand, TurtleEvent, TurtleEventSourcing, TurtleEventSourcingDescription, TurtleQuery}
-import com.github.scytrowski.sturtle.es.{CommandHandler, EventSourcing, EventSourcingDescription, QueryHandler}
+import cats.effect.{ContextShift, IO}
+import com.github.scytrowski.sturtle.core._
+import com.github.scytrowski.sturtle.es.{EventSourcing, EventSourcingDescription, EventSourcingSinks, EventStore, LocalEntityLockManager}
 
 object TestTurtleEventSourcing {
-  final case class TestData(commands: List[TurtleCommand] = Nil,
-                            queries: List[TurtleQuery] = Nil)
+  final case class Data(commands: List[TurtleCommand] = Nil,
+                        events: List[TurtleEvent] = Nil,
+                        queries: List[TurtleQuery] = Nil)
 
-  def apply(data: Ref[IO, TestData]): TurtleEventSourcing[IO] =
-    EventSourcing.basic(testDescription(data))
-
-  private def testDescription(data: Ref[IO, TestData]): TurtleEventSourcingDescription[IO] = {
-    val commandHandler = TurtleCommand.handler[IO] andThen CommandHandler((_, c) => data.modify(data => (data.copy(commands = data.commands :+ c)) -> List.empty))
-    val queryHandler = testQueryHandler(data)
-    EventSourcingDescription(Turtle.initial, commandHandler, TurtleEvent.handler, queryHandler)
+  def apply(data: Ref[IO, Data])(implicit cs: ContextShift[IO]): IO[TurtleEventSourcing[IO]] = {
+    LocalEntityLockManager[IO, String]
+      .map(new EventSourcing(description, EventStore.dummy, testSinks(data), _))
   }
 
-  private def testQueryHandler(data: Ref[IO, TestData]): QueryHandler[IO, Turtle, TurtleQuery] =
-    new QueryHandler[IO, Turtle, TurtleQuery] {
-      override def handle(state: Turtle, query: TurtleQuery): IO[query.Answer] = {
-        data.update(data => data.copy(queries = data.queries :+ query)) >>
-          TurtleQuery.handler[IO].handle(state, query)
-      }
+  private def testSinks(data: Ref[IO, Data]): TurtleEventSourcingSinks[IO] =
+    new EventSourcingSinks[IO, Turtle, TurtleCommand, TurtleEvent, TurtleQuery] {
+      override def commandSink(command: TurtleCommand): IO[Unit] =
+        data.update(d => d.copy(commands = d.commands :+ command))
+
+      override def eventSink(events: List[TurtleEvent]): IO[Unit] =
+        data.update(d => d.copy(events = d.events ++ events))
+
+      override def querySink(query: TurtleQuery): IO[Unit] =
+        data.update(d => d.copy(queries = d.queries :+ query))
     }
+
+  private val description: TurtleEventSourcingDescription[IO] =
+    EventSourcingDescription(Turtle.initial, TurtleCommand.handler, TurtleEvent.handler, TurtleQuery.handler)
 }

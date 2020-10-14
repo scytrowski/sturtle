@@ -146,7 +146,7 @@ class TurtleServerJobExecutorTest extends EffectSpecLike {
       jobQueue <- Queue.unbounded[IO, TurtleServerJob]
       turtleRef = new TestTurtleRef("test-turtle", turtleData, answer)
       client = new TestTurtleServerSideClient(clientData)
-      executor = new TurtleServerJobExecutor[IO](_ => IO.pure(turtleRef), client, jobQueue)
+      executor = new TurtleServerJobExecutor[IO](_ => turtleRef, client, jobQueue)
       fiber <- executor.execute.start
       _     <- (jobs :+ TurtleServerJob.Finish("finish")).toList.map(jobQueue.enqueue1).sequence
       _     <- fiber.join

@@ -1,51 +1,49 @@
 package com.github.scytrowski.sturtle.core
 
-import cats.effect.IO
 import cats.effect.concurrent.Ref
+import cats.effect.{IO, Resource}
 import com.github.scytrowski.sturtle.core.TurtleCommand.MoveTo
 import com.github.scytrowski.sturtle.core.TurtleQuery.GetAngle
-import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
+import com.github.scytrowski.sturtle.core.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.core.mock.TestTurtleEventSourcing
 import com.github.scytrowski.sturtle.geometry.Point
+import org.scalatest.LoneElement
 
-class LocalTurtleControllerTest extends CommonSpecLike {
+class LocalTurtleControllerTest extends EffectSpecLike with LoneElement {
   "LocalTurtleController" when {
 
     "run" should {
 
       "handle command on event sourcing" in {
         val command = MoveTo(Point.cartesian(5, 6))
+        val data = control("123")(_.run(command))
 
-        val io =
-          for {
-            data <- Ref.of[IO, TestTurtleEventSourcing.TestData](TestTurtleEventSourcing.TestData())
-            es   = TestTurtleEventSourcing(data)
-            ctrl <- LocalTurtleController("123", es)
-            _    <- ctrl.run(command)
-            d    <- data.get
-          } yield d.commands
-        val commands = io.unsafeRunSync()
-
-        commands mustBe List(command)
+        data.commands.loneElement mustBe command
       }
 
       "handle query on event sourcing" in {
         val query = GetAngle
+        val data = control("123")(_.execute(query))
 
-        val io =
-          for {
-            data <- Ref.of[IO, TestTurtleEventSourcing.TestData](TestTurtleEventSourcing.TestData())
-            es   = TestTurtleEventSourcing(data)
-            ctrl <- LocalTurtleController("123", es)
-            _    <- ctrl.execute(query)
-            d    <- data.get
-          } yield d.queries
-        val queries = io.unsafeRunSync()
-
-        queries mustBe List(query)
+        data.queries.loneElement mustBe query
       }
 
     }
 
   }
+
+  private def control[U](id: String)(f: LocalTurtleController[IO] => IO[U]): TestTurtleEventSourcing.Data = {
+    val resource =
+      for {
+        data   <- Resource.liftF(Ref.of[IO, TestTurtleEventSourcing.Data](TestTurtleEventSourcing.Data()))
+        es     <- Resource.liftF(TestTurtleEventSourcing(data))
+        entity <- es.entity(id)
+        cntrl  = new LocalTurtleController(entity)
+      } yield cntrl -> data
+    val io = resource.use { case (cntrl, data) =>
+      f(cntrl) *> data.get
+    }
+    io.unsafeRunSync()
+  }
+
 }

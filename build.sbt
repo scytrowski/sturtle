@@ -42,20 +42,16 @@ lazy val core = (project in file("core"))
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.2.0",
     // https://mvnrepository.com/artifact/org.typelevel/cats-effect
     libraryDependencies += "org.typelevel" %% "cats-effect" % "2.2.0",
+    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-core
+    libraryDependencies += "io.chrisdavenport" %% "log4cats-core" % "1.1.1",
+    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-slf4j
+    libraryDependencies += "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1",
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.30" % Test,
     // https://mvnrepository.com/artifact/org.scalatest/scalatest
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
   )
   .dependsOn(geometry, graphics, es)
-
-lazy val logging = (project in file("logging"))
-  .settings(
-    scalaVersion := languageVersion,
-    // https://mvnrepository.com/artifact/io.chrisdavenport/log4cats-core
-    libraryDependencies += "io.chrisdavenport" %% "log4cats-core" % "1.1.1",
-    // https://mvnrepository.com/artifact/org.scalatest/scalatest
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
-  )
-  .dependsOn(es, core)
 
 lazy val remoting = (project in file("remoting"))
   .settings(

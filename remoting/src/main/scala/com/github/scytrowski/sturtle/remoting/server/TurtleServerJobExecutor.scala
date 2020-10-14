@@ -2,27 +2,29 @@ package com.github.scytrowski.sturtle.remoting.server
 
 import cats.effect.Concurrent
 import cats.effect.syntax.concurrent._
-import cats.syntax.option._
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import com.github.scytrowski.sturtle.core.{TurtleController, TurtleQueryAnswer, TurtleRef}
+import cats.syntax.option._
+import com.github.scytrowski.sturtle.core.{TurtleController, TurtleQueryAnswer, TurtleRefProvider}
 import com.github.scytrowski.sturtle.remoting.net.TurtleServerSideClient
 import com.github.scytrowski.sturtle.remoting.protocol.TurtleClientCommand
 import fs2.concurrent.Dequeue1
 import io.chrisdavenport.log4cats.StructuredLogger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
-private[remoting] final class TurtleServerJobExecutor[F[_]: Concurrent](turtleRef: String => F[TurtleRef[F]],
-                                                      client: TurtleServerSideClient[F],
-                                                      jobDequeue: Dequeue1[F, TurtleServerJob]) {
+private[remoting] final class TurtleServerJobExecutor[F[_]: Concurrent](refProvider: TurtleRefProvider[F],
+                                                                        client: TurtleServerSideClient[F],
+                                                                        jobDequeue: Dequeue1[F, TurtleServerJob]) {
   def execute: F[Unit] =
     jobDequeue.dequeue1
       .flatTap(job => logger.debug(mdc(job.id))(s"Starting execution of server job: $job"))
       .flatMap {
         case TurtleServerJob.SelectTurtle(id, turtleId) =>
-          turtleRef(turtleId)
-            .flatMap(_.controller.use(selectTurtle(id, turtleId)))
+          refProvider
+            .ref(turtleId)
+            .controller
+            .use(selectTurtle(id, turtleId))
             .start
             .flatMap(_.join)
             .flatMap {
@@ -42,11 +44,14 @@ private[remoting] final class TurtleServerJobExecutor[F[_]: Concurrent](turtleRe
       case TurtleServerJob.SelectTurtle(id, turtleId) =>
         if (turtleId == acquiredTurtleId)
           selectTurtle(id, turtleId)(controller)
-        else
-          turtleRef(turtleId)
-            .flatMap(_.controller.use(selectTurtle(id, turtleId)))
+        else {
+          refProvider
+            .ref(turtleId)
+            .controller
+            .use(selectTurtle(id, turtleId))
             .start
             .flatMap(_.join)
+        }
       case TurtleServerJob.ReleaseTurtle(id) =>
         logger.debug(mdc(id, acquiredTurtleId.some))(s"Released turtle $acquiredTurtleId") *>
           turtleReleased(id).as(true)

@@ -33,6 +33,20 @@ class VectorTest extends CommonSpecLike {
 
     }
 
+    "between" should {
+
+      "create vector between two points" in {
+        val point1 = Point.cartesian(13, -5)
+        val point2 = Point.cartesian(-6, 7)
+
+        val vector = Vector.between(point1, point2)
+
+        vector.dx mustBe point2.x - point1.x
+        vector.dy mustBe point2.y - point1.y
+      }
+
+    }
+
     "negate" should {
 
       "yield correct result" in {
