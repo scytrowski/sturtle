@@ -3,8 +3,8 @@ package com.github.scytrowski.sturtle.core
 import cats.Id
 import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.core.TurtleEvent._
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point, Vector}
-import com.github.scytrowski.sturtle.graphics.Color
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Path, Point, Vector}
+import com.github.scytrowski.sturtle.core.graphics.Color
 
 class TurtleEventTest extends CommonSpecLike {
   "TurtleEvent" when {

@@ -4,8 +4,8 @@ import java.net.InetSocketAddress
 
 import cats.effect.{IO, Resource}
 import com.github.scytrowski.sturtle.core._
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Point}
 import com.github.scytrowski.sturtle.es.{EventSourcing, EventSourcingDescription, EventSourcingSinks, EventStore, LocalEntityLockManager}
-import com.github.scytrowski.sturtle.geometry.{Angle, Point}
 import com.github.scytrowski.sturtle.remoting.fixture.EffectSpecLike
 
 class TurtleRemotingTest extends EffectSpecLike {

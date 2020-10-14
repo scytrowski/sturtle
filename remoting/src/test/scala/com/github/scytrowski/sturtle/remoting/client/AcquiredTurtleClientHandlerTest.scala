@@ -2,8 +2,8 @@ package com.github.scytrowski.sturtle.remoting.client
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
+import com.github.scytrowski.sturtle.core.geometry.Angle
 import com.github.scytrowski.sturtle.core.{TurtleCommand, TurtleQuery, TurtleQueryAnswer}
-import com.github.scytrowski.sturtle.geometry.Angle
 import com.github.scytrowski.sturtle.remoting.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.remoting.mock.{TestTurtleClientJobRegistry, TestTurtleClientSideClient}
 import com.github.scytrowski.sturtle.remoting.protocol.TurtleServerCommand

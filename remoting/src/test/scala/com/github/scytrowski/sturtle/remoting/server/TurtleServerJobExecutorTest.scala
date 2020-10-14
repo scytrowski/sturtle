@@ -6,8 +6,8 @@ import cats.instances.list._
 import cats.syntax.traverse._
 import com.github.scytrowski.sturtle.core.TurtleQuery.GetAngle
 import com.github.scytrowski.sturtle.core.TurtleQueryAnswer.{AngleAnswer, PenStateAnswer}
+import com.github.scytrowski.sturtle.core.geometry.Angle
 import com.github.scytrowski.sturtle.core.{PenState, TurtleCommand, TurtleQueryAnswer}
-import com.github.scytrowski.sturtle.geometry.Angle
 import com.github.scytrowski.sturtle.remoting.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.remoting.mock.{TestTurtleRef, TestTurtleServerSideClient}
 import com.github.scytrowski.sturtle.remoting.protocol.TurtleClientCommand

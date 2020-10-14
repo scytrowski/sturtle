@@ -5,8 +5,8 @@ import cats.effect.{IO, Resource}
 import com.github.scytrowski.sturtle.core.TurtleCommand.MoveTo
 import com.github.scytrowski.sturtle.core.TurtleQuery.GetAngle
 import com.github.scytrowski.sturtle.core.fixture.EffectSpecLike
+import com.github.scytrowski.sturtle.core.geometry.Point
 import com.github.scytrowski.sturtle.core.mock.TestTurtleEventSourcing
-import com.github.scytrowski.sturtle.geometry.Point
 import org.scalatest.LoneElement
 
 class LocalTurtleControllerTest extends EffectSpecLike with LoneElement {

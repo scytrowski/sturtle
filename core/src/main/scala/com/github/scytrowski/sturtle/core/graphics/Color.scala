@@ -1,4 +1,4 @@
-package com.github.scytrowski.sturtle.graphics
+package com.github.scytrowski.sturtle.core.graphics
 
 final case class Color private(red: Short, green: Short, blue: Short, bitDepth: Byte)
 

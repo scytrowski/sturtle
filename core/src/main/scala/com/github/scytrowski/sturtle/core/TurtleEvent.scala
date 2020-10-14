@@ -1,9 +1,9 @@
 package com.github.scytrowski.sturtle.core
 
 import cats.Applicative
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Path, Vector}
+import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.es.EventHandler
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Vector}
-import com.github.scytrowski.sturtle.graphics.Color
 
 sealed abstract class TurtleEvent
 

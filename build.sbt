@@ -4,20 +4,6 @@ version := "0.1"
 
 val languageVersion = "2.13.3"
 
-lazy val geometry = (project in file("geometry"))
-  .settings(
-    scalaVersion := languageVersion,
-    // https://mvnrepository.com/artifact/org.scalatest/scalatest
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
-  )
-
-lazy val graphics = (project in file("graphics"))
-  .settings(
-    scalaVersion := languageVersion,
-    // https://mvnrepository.com/artifact/org.scalatest/scalatest
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
-  )
-
 lazy val es = (project in file("es"))
   .settings(
     scalaVersion := "2.13.3",
@@ -51,7 +37,7 @@ lazy val core = (project in file("core"))
     // https://mvnrepository.com/artifact/org.scalatest/scalatest
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
   )
-  .dependsOn(geometry, graphics, es)
+  .dependsOn(es)
 
 lazy val remoting = (project in file("remoting"))
   .settings(

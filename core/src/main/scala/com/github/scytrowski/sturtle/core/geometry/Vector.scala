@@ -1,4 +1,4 @@
-package com.github.scytrowski.sturtle.geometry
+package com.github.scytrowski.sturtle.core.geometry
 
 final case class Vector private(dx: Double, dy: Double) {
   def negate: Vector = Vector(-dx, -dy)

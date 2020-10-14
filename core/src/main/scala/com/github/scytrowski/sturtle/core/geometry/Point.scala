@@ -1,4 +1,4 @@
-package com.github.scytrowski.sturtle.geometry
+package com.github.scytrowski.sturtle.core.geometry
 
 final case class Point private(x: Double, y: Double) {
   def plus(vector: Vector): Point = Point(x + vector.dx, y + vector.dy)

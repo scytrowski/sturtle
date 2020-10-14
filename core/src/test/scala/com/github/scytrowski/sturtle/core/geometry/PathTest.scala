@@ -1,6 +1,6 @@
-package com.github.scytrowski.sturtle.geometry
+package com.github.scytrowski.sturtle.core.geometry
 
-import com.github.scytrowski.sturtle.geometry.fixture.CommonSpecLike
+import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
 
 class PathTest extends CommonSpecLike {
   "Path" when {

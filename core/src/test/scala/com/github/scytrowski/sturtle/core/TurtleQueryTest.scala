@@ -4,8 +4,8 @@ import cats.Id
 import com.github.scytrowski.sturtle.core.TurtleQuery.{GetAngle, GetFillColor, GetPath, GetPenColor, GetPenState, GetPosition}
 import com.github.scytrowski.sturtle.core.TurtleQueryAnswer.{AngleAnswer, FillColorAnswer, PathAnswer, PenColorAnswer, PenStateAnswer, PositionAnswer}
 import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point}
-import com.github.scytrowski.sturtle.graphics.Color
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Path, Point}
+import com.github.scytrowski.sturtle.core.graphics.Color
 
 class TurtleQueryTest extends CommonSpecLike {
   "TurtleQuery" when {

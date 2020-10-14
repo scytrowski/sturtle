@@ -1,7 +1,7 @@
 package com.github.scytrowski.sturtle.core
 
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point}
-import com.github.scytrowski.sturtle.graphics.Color
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Path, Point}
+import com.github.scytrowski.sturtle.core.graphics.Color
 
 final case class Turtle(position: Point,
                         angle: Angle,

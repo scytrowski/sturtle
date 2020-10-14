@@ -1,9 +1,9 @@
 package com.github.scytrowski.sturtle.core
 
 import cats.Applicative
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
+import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.es.CommandHandler
-import com.github.scytrowski.sturtle.geometry.{Angle, Point, Vector}
-import com.github.scytrowski.sturtle.graphics.Color
 
 sealed abstract class TurtleCommand
 
@@ -42,7 +42,7 @@ object TurtleCommand {
     }
 
   final case class MoveTo(position: Point) extends TurtleCommand
-  final case class MoveBy(vector: Vector) extends TurtleCommand
+  final case class MoveBy(vector: geometry.Vector) extends TurtleCommand
   final case class MoveForward(radius: Double) extends TurtleCommand
   final case class MoveBackward(radius: Double) extends TurtleCommand
   final case class RotateTo(angle: Angle) extends TurtleCommand

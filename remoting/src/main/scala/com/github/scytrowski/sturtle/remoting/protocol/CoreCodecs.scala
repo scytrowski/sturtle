@@ -3,9 +3,9 @@ package com.github.scytrowski.sturtle.remoting.protocol
 import com.github.scytrowski.sturtle.core.TurtleCommand._
 import com.github.scytrowski.sturtle.core.TurtleQuery._
 import com.github.scytrowski.sturtle.core.TurtleQueryAnswer._
-import com.github.scytrowski.sturtle.core.{PenState, TurtleCommand, TurtleQuery, TurtleQueryAnswer}
-import com.github.scytrowski.sturtle.geometry.{Angle, Path, Point, Vector}
-import com.github.scytrowski.sturtle.graphics.Color
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Path, Point, Vector}
+import com.github.scytrowski.sturtle.core.graphics.Color
+import com.github.scytrowski.sturtle.core.{PenState, TurtleCommand, TurtleQuery, TurtleQueryAnswer, geometry}
 import scodec.bits.BitVector
 import scodec.{Attempt, Codec, Decoder, Encoder}
 import shapeless.{::, HNil}
@@ -24,7 +24,7 @@ private[protocol] trait CoreCodecs {
   protected def point: Codec[Point] = (double :: double)
     .xmapc { case x :: y :: HNil => Point.cartesian(x, y) } (p => p.x :: p.y :: HNil)
 
-  protected def vector: Codec[Vector] = (double :: double)
+  protected def vector: Codec[geometry.Vector] = (double :: double)
     .xmapc { case dx :: dy :: HNil => Vector.cartesian(dx, dy) } (v => v.dx :: v.dy :: HNil)
 
   protected def angle: Codec[Angle] = double.xmapc(Angle.radians)(_.value)

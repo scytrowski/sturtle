@@ -1,4 +1,4 @@
-package com.github.scytrowski.sturtle.geometry
+package com.github.scytrowski.sturtle.core.geometry
 
 final case class Angle private(value: Double) {
   def negate: Angle = Angle.radians(-value)

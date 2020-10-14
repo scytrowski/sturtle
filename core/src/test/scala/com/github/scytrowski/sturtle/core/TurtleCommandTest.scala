@@ -4,8 +4,8 @@ import cats.Id
 import com.github.scytrowski.sturtle.core.TurtleCommand._
 import com.github.scytrowski.sturtle.core.TurtleEvent._
 import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.geometry.{Angle, Point, Vector}
-import com.github.scytrowski.sturtle.graphics.Color
+import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
+import com.github.scytrowski.sturtle.core.graphics.Color
 
 class TurtleCommandTest extends CommonSpecLike {
   private val position = Point.cartesian(1, 2)

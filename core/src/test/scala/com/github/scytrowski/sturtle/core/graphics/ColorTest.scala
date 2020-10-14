@@ -1,6 +1,6 @@
-package com.github.scytrowski.sturtle.graphics
+package com.github.scytrowski.sturtle.core.graphics
 
-import com.github.scytrowski.sturtle.graphics.fixture.CommonSpecLike
+import com.github.scytrowski.sturtle.core.fixture.CommonSpecLike
 
 class ColorTest extends CommonSpecLike {
   "Color" when {
