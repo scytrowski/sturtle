@@ -2,7 +2,7 @@ package com.github.scytrowski.sturtle.es
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import com.github.scytrowski.sturtle.es.RecoveryData.Snapshot
+import com.github.scytrowski.sturtle.es.EventDescription.Snapshot
 import com.github.scytrowski.sturtle.es.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.es.mock.TestEventSourcingDescription.{TestCommand, TestEvent, TestQuery, TestState}
 import com.github.scytrowski.sturtle.es.mock.{TestEventSourcingDescription, TestEventStore}

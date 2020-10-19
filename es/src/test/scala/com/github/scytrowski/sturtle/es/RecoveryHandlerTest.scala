@@ -11,8 +11,8 @@ class RecoveryHandlerTest extends AnyWordSpec with Matchers {
 
       "remove duplicates by id" in {
         val state = recover(
-          RecoveryData.Event("1", 1, TestEvent("a")),
-          RecoveryData.Event("1", 2, TestEvent("b"))
+          EventDescription.Event("1", 1, TestEvent("a")),
+          EventDescription.Event("1", 2, TestEvent("b"))
         )
 
         state.data must contain oneOf("a", "b")
@@ -20,9 +20,9 @@ class RecoveryHandlerTest extends AnyWordSpec with Matchers {
 
       "sort events by timestamp" in {
         val state = recover(
-          RecoveryData.Event("3", 3, TestEvent("c")),
-          RecoveryData.Event("2", 2, TestEvent("b")),
-          RecoveryData.Event("1", 1, TestEvent("a"))
+          EventDescription.Event("3", 3, TestEvent("c")),
+          EventDescription.Event("2", 2, TestEvent("b")),
+          EventDescription.Event("1", 1, TestEvent("a"))
         )
 
         state.data must contain theSameElementsInOrderAs List("a", "b", "c")
@@ -30,12 +30,12 @@ class RecoveryHandlerTest extends AnyWordSpec with Matchers {
 
       "start recovery from the latest snapshot" in {
         val state = recover(
-          RecoveryData.Snapshot("1", 1, TestState(List("a"))),
-          RecoveryData.Event("2", 2, TestEvent("b")),
-          RecoveryData.Event("3", 3, TestEvent("c")),
-          RecoveryData.Snapshot("4", 4, TestState(List("d"))),
-          RecoveryData.Event("5", 5, TestEvent("e")),
-          RecoveryData.Event("6", 6, TestEvent("f"))
+          EventDescription.Snapshot("1", 1, TestState(List("a"))),
+          EventDescription.Event("2", 2, TestEvent("b")),
+          EventDescription.Event("3", 3, TestEvent("c")),
+          EventDescription.Snapshot("4", 4, TestState(List("d"))),
+          EventDescription.Event("5", 5, TestEvent("e")),
+          EventDescription.Event("6", 6, TestEvent("f"))
         )
 
         state.data must contain theSameElementsInOrderAs List("d", "e", "f")
@@ -45,7 +45,7 @@ class RecoveryHandlerTest extends AnyWordSpec with Matchers {
 
   }
 
-  private def recover(data: RecoveryData[TestState, TestEvent]*): TestState = {
+  private def recover(data: EventDescription[TestState, TestEvent]*): TestState = {
     val eventHandler = EventHandler[IO, TestState, TestEvent] { case (state, event) =>
       IO.pure(state.copy(data = state.data :+ event.newElement))
     }

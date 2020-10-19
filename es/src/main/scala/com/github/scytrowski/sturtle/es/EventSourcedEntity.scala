@@ -8,7 +8,7 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 final class EventSourcedEntity[F[_]: Sync, S, C, E, Q <: Query[S]] private[es](description: EventSourcingDescription[F, S, C, E, Q],
                                                                                sinks: EventSourcingSinks[F, S, C, E, Q],
-                                                                               session: EventStoreSession[F, E],
+                                                                               session: EventStoreSession[F, S, E],
                                                                                stateVar: MVar2[F, S]) {
   def run(command: C): F[Unit] = {
     stateVar.modify_ { state =>
@@ -21,6 +21,8 @@ final class EventSourcedEntity[F[_]: Sync, S, C, E, Q <: Query[S]] private[es](d
             .flatTap(session.persist)
             .flatTap(sinks.eventSink)
             .flatMap(description.eventHandler.handleMany(state, _))
+            .flatTap(candidate => logger.debug(s"Delivering snapshot candidate $candidate"))
+            .flatTap(session.snapshotCandidate)
     }
   }
 

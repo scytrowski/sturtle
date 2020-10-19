@@ -14,7 +14,7 @@ final class EventSourcing[F[_]: Concurrent, I, S, C, E, Q <: Query[S]](descripti
     for {
       _        <- retrieveLock(id)
       state    <- recover(id)
-      session  <- eventStore.session
+      session  <- eventStore.session(id)
       stateVar <- Resource.liftF(MVar.of(state))
     } yield new EventSourcedEntity(description, sinks, session, stateVar)
 
