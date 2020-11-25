@@ -87,6 +87,19 @@ lazy val remoting = (project in file("remoting"))
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
     libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.30" % Test,
     // https://mvnrepository.com/artifact/org.scalatest/scalatest
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test,
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
   )
   .dependsOn(es, core)
+
+lazy val tpl = (project in file("tpl"))
+  .settings(
+    scalaVersion := languageVersion,
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
+    // https://mvnrepository.com/artifact/co.fs2/fs2-core
+    libraryDependencies += "co.fs2" %% "fs2-core" % "2.5-90ea652",
+    // https://mvnrepository.com/artifact/com.chuusai/shapeless
+    libraryDependencies += "com.chuusai" %% "shapeless" % "2.4.0-M1",
+    // https://mvnrepository.com/artifact/org.scalatest/scalatest
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.3.0-SNAP2" % Test
+  )
+  .dependsOn(core)
