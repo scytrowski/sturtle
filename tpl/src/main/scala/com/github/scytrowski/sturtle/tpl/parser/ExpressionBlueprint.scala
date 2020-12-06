@@ -1,6 +1,6 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
 import com.github.scytrowski.sturtle.tpl.parser.ExpressionToken.{OperatorToken, ValueToken}
 
 final case class ExpressionBlueprint(tokens: List[ExpressionToken], operators: List[Operator]) {

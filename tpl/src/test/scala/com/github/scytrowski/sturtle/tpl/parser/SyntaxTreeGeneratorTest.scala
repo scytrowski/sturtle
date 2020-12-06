@@ -1,8 +1,8 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Break, Loop, Return}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.{Assignment, Block, Break, Loop, Return}
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.interpreter.Value.NumberValue
 
 class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>

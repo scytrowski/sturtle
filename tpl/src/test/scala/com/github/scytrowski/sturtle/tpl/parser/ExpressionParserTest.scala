@@ -1,8 +1,8 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.Name
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.Name
 import com.github.scytrowski.sturtle.tpl.parser.ExpressionToken.{OperatorToken, ValueToken}
 import org.scalatest.Inside
 

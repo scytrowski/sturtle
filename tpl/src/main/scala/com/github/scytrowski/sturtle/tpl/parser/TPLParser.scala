@@ -3,10 +3,10 @@ package com.github.scytrowski.sturtle.tpl.parser
 import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
-import com.github.scytrowski.sturtle.tpl.interpreter.Case.{ConditionalCase, DefaultCase}
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
-import com.github.scytrowski.sturtle.tpl.interpreter.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.{EmptyBranch, InvalidBracketConstruction, InvalidName, UnexpectedToken, WrappedError}
 
 object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
@@ -52,14 +52,14 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
     } yield FunctionDefinition(funcName, params, body)
 
   private def branch: P[SyntaxTree] = {
-    def defaultCase: P[Case] = block.map(DefaultCase)
+    def defaultCase: P[Case] = block.map(Case.Default)
 
     def conditionalCase: P[Case] =
       for {
         condition <- expression
         _ <- require(Token.Then)
         b <- block
-      } yield ConditionalCase(condition, b)
+      } yield Conditional(condition, b)
 
     val cases = unfoldWhileDefinedS[Option[CaseType], Case](Some(CaseType.Conditional)) {
       case Some(CaseType.Conditional) =>

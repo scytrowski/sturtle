@@ -1,7 +1,8 @@
-package com.github.scytrowski.sturtle.tpl.interpreter
+package com.github.scytrowski.sturtle.tpl.codegen
 
 import cats.data.NonEmptyList
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.Name
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.Name
+import com.github.scytrowski.sturtle.tpl.interpreter.Value
 
 sealed abstract class SyntaxTree
 

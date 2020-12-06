@@ -1,11 +1,11 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.data.NonEmptyList
+import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
+import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Branch, Break, Expression, FunctionDefinition, Loop, Return}
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.Case.{ConditionalCase, DefaultCase}
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.{FunctionCall, Name, Static}
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.{Assignment, Block, Branch, Break, Expression, FunctionDefinition, Loop, Return}
 import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.{UnexpectedEndOfStream, UnexpectedToken}
 import org.scalatest.Inside
@@ -50,7 +50,7 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
       )
 
       parseSingleStatement(tokens) mustBe Branch(
-        NonEmptyList.of(ConditionalCase(
+        NonEmptyList.of(Conditional(
           Name("a"),
           Block(List(Return(Name("b"))))
         ))
@@ -74,11 +74,11 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
 
       parseSingleStatement(tokens) mustBe Branch(
         NonEmptyList.of(
-          ConditionalCase(
+          Conditional(
             Name("a"),
             Block(List(Return(Name("b"))))
           ),
-          ConditionalCase(
+          Conditional(
             Name("b"),
             Block(List(Return(Name("a"))))
           )
@@ -101,11 +101,11 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
 
       parseSingleStatement(tokens) mustBe Branch(
         NonEmptyList.of(
-          ConditionalCase(
+          Conditional(
             Name("a"),
             Block(List(Return(Name("b"))))
           ),
-          DefaultCase(
+          Case.Default(
             Block(List(Return(Name("a"))))
           )
         )
@@ -132,15 +132,15 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
 
       parseSingleStatement(tokens) mustBe Branch(
         NonEmptyList.of(
-          ConditionalCase(
+          Conditional(
             Name("a"),
             Block(List(Return(Name("b"))))
           ),
-          ConditionalCase(
+          Conditional(
             Name("b"),
             Block(List(Return(Name("a"))))
           ),
-          DefaultCase(
+          Case.Default(
             Block(List(Return(Name("c"))))
           )
         )
@@ -204,8 +204,8 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
         )
 
         parseSingleStatement(tokens) mustBe Branch(NonEmptyList.of(
-          ConditionalCase(Name("a"), Block(List(Return(Static(VoidValue))))),
-          ConditionalCase(Name("b"), Block(List(Break))
+          Conditional(Name("a"), Block(List(Return(Static(VoidValue))))),
+          Conditional(Name("b"), Block(List(Break))
         )))
       }
 
@@ -221,8 +221,8 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
         )
 
         parseSingleStatement(tokens) mustBe Branch(NonEmptyList.of(
-          ConditionalCase(Name("a"), Block(List(Return(Static(VoidValue))))),
-          DefaultCase(Block(List(Break)))
+          Conditional(Name("a"), Block(List(Return(Static(VoidValue))))),
+          Case.Default(Block(List(Break)))
         ))
       }
 
@@ -236,7 +236,7 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
         )
 
         parseSingleStatement(tokens) mustBe Branch(NonEmptyList.of(
-          ConditionalCase(Name("a"), Block(List(Return(Static(VoidValue)))))
+          Conditional(Name("a"), Block(List(Return(Static(VoidValue)))))
         ))
       }
 

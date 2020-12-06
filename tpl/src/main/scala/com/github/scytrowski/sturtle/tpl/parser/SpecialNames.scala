@@ -2,7 +2,7 @@ package com.github.scytrowski.sturtle.tpl.parser
 
 import java.util.UUID
 
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.Name
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.Name
 
 object SpecialNames {
   def temporaryVariable: Name = {

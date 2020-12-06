@@ -1,8 +1,8 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.{Assignment, Block, Expression, Loop}
-import com.github.scytrowski.sturtle.tpl.interpreter.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Expression, Loop}
 import com.github.scytrowski.sturtle.tpl.interpreter.Value.NumberValue
 
 trait SyntaxTreeGenerator {
