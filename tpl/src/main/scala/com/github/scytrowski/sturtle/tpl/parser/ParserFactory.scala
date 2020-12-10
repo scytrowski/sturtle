@@ -29,6 +29,7 @@ trait ParserFactory[T] {
   protected def lift[A](parse: Parse[T, A]): P[A] = Parser(parse)
 
   protected val peek: P[T] = lift { t =>
+    1 :: 2 :: HNil
     t.headOption match {
       case Some(head) => ParseResult.Success(head, t)
       case None       => ParseResult.Failure(UnexpectedEndOfStream)

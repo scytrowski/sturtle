@@ -3,7 +3,6 @@ package com.github.scytrowski.sturtle.tpl.interpreter
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLCode.{Regular, WithExit, WithPush}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{ExitFunction, ExitLoop, PopTo, PushValue}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.StringValue
 import org.scalatest.Inside
 
 class TPLCodeTest extends CommonSpecLike with Inside {

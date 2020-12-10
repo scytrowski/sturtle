@@ -1,57 +1,63 @@
 package com.github.scytrowski.sturtle.tpl.interpreter
 
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
+import cats.{Foldable, UnorderedFoldable}
+import cats.syntax.foldable._
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError._
 
-final case class InterpreterContext(scope: Scope, stack: Stack[Value]) {
+final case class InterpreterContext[F[_]](scope: Scope[F], stack: Stack[Value]) {
   def getVariable(signature: VariableSignature): Either[InterpreterError, RuntimeVariable] =
     scope
       .getVariable(signature)
       .toRight(VariableNotFound(signature))
 
-  def putVariable(signature: VariableSignature, value: Value): InterpreterContext =
-    copy(scope = scope.putObject(RuntimeVariable(signature, value)))
-
-  def getFunction(signature: FunctionSignature): Either[InterpreterError, RuntimeFunction] =
+  def getFunction(signature: FunctionSignature): Either[InterpreterError, RuntimeFunction[F]] =
     scope
       .getFunction(signature)
       .toRight(FunctionNotFound(signature))
 
-  def putFunction(signature: FunctionSignature, body: TPLCode.WithExit): InterpreterContext =
-    copy(scope = scope.putObject(RuntimeFunction(signature, body)))
+  def putObjects[G[_]: Foldable](objects: G[RuntimeObject[F]]): InterpreterContext[F] =
+    objects.foldLeft(this)(_.putObject(_))
 
-  def pushValue(value: Value): InterpreterContext = copy(stack = stack.push(value))
+  def putObject(obj: RuntimeObject[F]): InterpreterContext[F] = copy(scope = scope.putObject(obj))
 
-  def pushFrom(from: VariableSignature): Either[InterpreterError, InterpreterContext] =
+  def pushValue(value: Value): InterpreterContext[F] = copy(stack = stack.push(value))
+
+  def pushFrom(from: VariableSignature): Either[InterpreterError, InterpreterContext[F]] =
     getVariable(from)
       .map(_.value)
       .map(pushValue)
 
-  def pop: Either[InterpreterError, (Value, InterpreterContext)] =
+  def pop: Either[InterpreterError, (Value, InterpreterContext[F])] =
     stack.pop
       .toRight(EmptyStack)
       .map { case (value, updatedStack) => value -> copy(stack = updatedStack) }
 
-  def popTo(to: VariableSignature): Either[InterpreterError, InterpreterContext] =
+  def popTo(to: VariableSignature): Either[InterpreterError, InterpreterContext[F]] =
     pop
-      .map { case (value, updatedCtx) => updatedCtx.putVariable(to, value) }
+      .map { case (value, updatedCtx) => updatedCtx.putObject(RuntimeVariable(to, value)) }
 
-  def enterFunction: InterpreterContext = copy(scope = scope.onTop.withinFunction)
+  def enterFunction: InterpreterContext[F] = copy(scope = scope.onTop.withinFunction)
 
-  def enterLoop: InterpreterContext = copy(scope = scope.onTop.withinLoop)
+  def enterLoop: InterpreterContext[F] = copy(scope = scope.onTop.withinLoop)
 
-  def exitFunction: Either[InterpreterError, InterpreterContext] =
+  def exitFunction: Either[InterpreterError, InterpreterContext[F]] =
     scope.scopeType match {
       case ScopeType.WithinFunction => Right(copy(scope = scope.parent))
       case _ => Left(NotInFunction)
     }
 
-  def exitLoop: Either[InterpreterError, InterpreterContext] =
+  def exitLoop: Either[InterpreterError, InterpreterContext[F]] =
     scope.scopeType match {
       case ScopeType.WithinLoop => Right(copy(scope = scope.parent))
       case _ => Left(NotInLoop)
     }
+
+  def <+>(other: InterpreterContext[F]): InterpreterContext[F] = merge(other)
+
+  def merge(other: InterpreterContext[F]): InterpreterContext[F] =
+    InterpreterContext(scope.merge(other.scope), stack.merge(other.stack))
 }
 
 object InterpreterContext {
-  val initial: InterpreterContext = InterpreterContext(Scope.root, Stack.empty)
+  def initial[F[_]]: InterpreterContext[F] = InterpreterContext(Scope.root, Stack.empty)
 }

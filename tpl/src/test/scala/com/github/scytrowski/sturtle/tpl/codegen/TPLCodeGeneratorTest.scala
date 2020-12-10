@@ -3,10 +3,10 @@ package com.github.scytrowski.sturtle.tpl.codegen
 import cats.data.NonEmptyList
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Block, Expression}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, ExitFunction, ExitLoop, DefineFunction, Invoke, Loop, PopTo, PushFrom, PushValue}
-import com.github.scytrowski.sturtle.tpl.interpreter.{FunctionSignature, TPLCode, TPLInstruction, VariableSignature}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, FunctionSignature, NumberValue, StringValue, TPLCode, TPLInstruction, VariableSignature, VoidValue}
 import org.scalatest.Inside
+import shapeless.Nat._3
 
 class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
   "TPLCodeGenerator" should {
@@ -48,7 +48,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
             PushFrom(VariableSignature("a")),
             PushFrom(VariableSignature("b")),
             PushFrom(VariableSignature("c")),
-            Invoke(FunctionSignature(name, 3))
+            Invoke(FunctionSignature(name, _3))
           )
         }
       }
@@ -69,9 +69,9 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
           )
 
           generateSingleInstruction(definition) mustBe DefineFunction(
-            FunctionSignature(name.value, 3),
+            FunctionSignature(name.value, _3),
             TPLCode(
-              parameters.map(p => VariableSignature(p.value)).map(PopTo).reverse :+ ExitLoop:_*
+              parameters.toList.map(p => VariableSignature(p.value)).map(PopTo).reverse :+ ExitLoop:_*
             ).withExit(PushValue(VoidValue))
           )
         }
@@ -81,7 +81,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
           val parameters = List(
             Expression.Name("d"),
             Expression.Name("e"),
-            Expression.Name("f")
+            Expression.Name("f"),
           )
           val returnValue = StringValue("test")
           val definition = SyntaxTree.FunctionDefinition(
@@ -91,9 +91,9 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
           )
 
           generateSingleInstruction(definition) mustBe DefineFunction(
-            FunctionSignature(name.value, 3),
+            FunctionSignature(name.value, _3),
             TPLCode(
-              parameters.map(p => VariableSignature(p.value)).map(PopTo).reverse:_*
+              parameters.toList.map(p => VariableSignature(p.value)).map(PopTo).reverse:_*
             ).withExit(PushValue(returnValue))
           )
         }

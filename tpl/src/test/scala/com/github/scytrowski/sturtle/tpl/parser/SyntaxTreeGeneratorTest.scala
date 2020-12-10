@@ -1,9 +1,9 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Break, Loop, Return}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Break, Loop}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.NumberValue
+import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
 
 class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
   "SyntaxTreeGenerator" should {
@@ -29,13 +29,6 @@ class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { 
       val body = Block(List(Break))
 
       gen.loop(condition, body) mustBe Loop(condition, body)
-    }
-
-    "generate block" in {
-      val st1 = Break
-      val st2 = Return(Name("r"))
-
-      gen.block(st1, st2) mustBe Block(List(st1, st2))
     }
 
     "generate assignment" in {

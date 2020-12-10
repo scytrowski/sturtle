@@ -1,23 +1,20 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Expression, Loop}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.NumberValue
+import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
 
 trait SyntaxTreeGenerator {
   protected def repeat(times: Expression, body: Block, counter: Name = SpecialNames.temporaryVariable): Block =
-    block(
+    Block(List(
       assignment(counter, number(0)),
       loop(
         lessOrEqual(counter, times),
         Block(increment(counter) +: body.statements)
       )
-    )
+    ))
 
   protected def loop(condition: Expression, body: Block): Loop = Loop(condition, body)
-
-  protected def block(statements: SyntaxTree*): Block = Block(statements.toList)
 
   protected def assignment(name: Name, value: Expression): Assignment =
     Assignment(name, value)

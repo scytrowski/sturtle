@@ -6,7 +6,7 @@ import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Branch, Break, Expression, FunctionDefinition, Loop, Return}
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue, VoidValue}
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.{UnexpectedEndOfStream, UnexpectedToken}
 import org.scalatest.Inside
 
@@ -205,8 +205,8 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
 
         parseSingleStatement(tokens) mustBe Branch(NonEmptyList.of(
           Conditional(Name("a"), Block(List(Return(Static(VoidValue))))),
-          Conditional(Name("b"), Block(List(Break))
-        )))
+          Conditional(Name("b"), Block(List(Break)))
+        ))
       }
 
       "next token is else" in {

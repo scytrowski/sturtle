@@ -29,5 +29,17 @@ class StackTest extends CommonSpecLike with OptionValues {
         Stack.empty.pop.isEmpty mustBe true
       }
     }
+
+    "merge" should {
+      "take elements from outer scope as a first priority" in {
+        val innerScope = Stack("a", "b")
+        val outerScope = Stack("c", "d")
+
+        val merged = innerScope.merge(outerScope)
+        val elements = List.unfold(merged)(_.pop)
+
+        elements mustBe List("c", "d", "a", "b")
+      }
+    }
   }
 }

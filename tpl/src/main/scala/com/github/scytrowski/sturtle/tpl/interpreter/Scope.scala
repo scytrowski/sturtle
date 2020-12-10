@@ -1,58 +1,70 @@
 package com.github.scytrowski.sturtle.tpl.interpreter
 
-trait Scope {
-  type Self <: Scope
+trait Scope[F[_]] {
+  type Self <: Scope[F]
 
   def scopeType: ScopeType
 
   final def getVariable(signature: VariableSignature): Option[RuntimeVariable] =
     getObject(signature).collect { case v: RuntimeVariable => v }
 
-  final def getFunction(signature: FunctionSignature): Option[RuntimeFunction] =
-    getObject(signature).collect { case f: RuntimeFunction => f }
+  final def getFunction(signature: FunctionSignature): Option[RuntimeFunction[F]] =
+    getObject(signature).collect { case f: RuntimeFunction[F] => f }
 
-  def putObject(obj: RuntimeObject): Self
-  def getObject(signature: Signature): Option[RuntimeObject]
+  final def merge(other: Scope[F]): Scope[F] = MergedScope(this, other)
+
+  final def onTop: Scope[F] = LayeredScope(this.scopeType, Map.empty, Some(this))
+
+  def putObject(obj: RuntimeObject[F]): Self
+  def getObject(signature: Signature): Option[RuntimeObject[F]]
 
   def withinFunction: Self
   def withinLoop: Self
 
-  def parent: Scope
-  def onTop: Scope
+  def parent: Scope[F]
 }
 
 object Scope {
-  def root: Scope = LayeredScope(ScopeType.Regular, Map.empty, None)
+  def root[F[_]]: Scope[F] = LayeredScope(ScopeType.Regular, Map.empty, None)
 }
 
-trait MapBasedScope extends Scope {
-  def objects: Map[Signature, RuntimeObject]
+final case class LayeredScope[F[_]] private(scopeType: ScopeType,
+                                            objects: Map[Signature, RuntimeObject[F]],
+                                            fallbackScope: Option[Scope[F]]) extends Scope[F] {
+  override type Self = LayeredScope[F]
 
-  protected def fallbackScope: Option[Scope]
-
-  final override def getObject(signature: Signature): Option[RuntimeObject] = objects.get(signature)
-}
-
-final case class LayeredScope private(scopeType: ScopeType,
-                                      objects: Map[Signature, RuntimeObject],
-                                      protected val fallbackScope: Option[Scope]) extends MapBasedScope {
-  override type Self = LayeredScope
-
-  override def putObject(obj: RuntimeObject): LayeredScope =
+  override def putObject(obj: RuntimeObject[F]): LayeredScope[F] =
     copy(objects = objects.updated(obj.signature, obj))
 
-  override def withinFunction: LayeredScope = copy(scopeType = ScopeType.WithinFunction)
+  override def getObject(signature: Signature): Option[RuntimeObject[F]] =
+    objects.get(signature).orElse(fallbackScope.flatMap(_.getObject(signature)))
 
-  override def withinLoop: LayeredScope = copy(scopeType = ScopeType.WithinLoop)
+  override def withinFunction: LayeredScope[F] = copy(scopeType = ScopeType.WithinFunction)
 
-  override val parent: Scope = fallbackScope.getOrElse(this)
+  override def withinLoop: LayeredScope[F] = copy(scopeType = ScopeType.WithinLoop)
 
-  override def onTop: Scope = LayeredScope(scopeType, Map.empty, Some(this))
+  override val parent: Scope[F] = fallbackScope.getOrElse(this)
 }
 
-final case class RootScope private(scopeType: ScopeType,
-                                   variables: Map[VariableSignature, StoredVariable],
-                                   functions: Map[FunctionSignature, StoredFunction])
+final case class MergedScope[F[_]](inner: Scope[F], outer: Scope[F]) extends Scope[F] {
+  override type Self = MergedScope[F]
+
+  override val scopeType: ScopeType = outer.scopeType
+
+  override def putObject(obj: RuntimeObject[F]): MergedScope[F] = copy(outer = outer.putObject(obj))
+
+  override def getObject(signature: Signature): Option[RuntimeObject[F]] =
+    outer
+      .getObject(signature)
+      .orElse(inner.getObject(signature))
+
+  override def withinFunction: MergedScope[F] = copy(outer = outer.withinFunction)
+
+  override def withinLoop: MergedScope[F] = copy(outer = outer.withinLoop)
+
+  override val parent: Scope[F] = inner
+}
+
 
 sealed abstract class ScopeType
 

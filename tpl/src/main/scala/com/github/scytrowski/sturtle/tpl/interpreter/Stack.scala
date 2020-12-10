@@ -6,10 +6,14 @@ trait Stack[A] {
   def push(a: A): Self
 
   def pop: Option[(A, Self)]
+
+  final def merge(other: Stack[A]): Stack[A] = MergedStack(this, other)
 }
 
 object Stack {
-  def empty[A]: Stack[A] = ListBasedStack(List.empty)
+  def empty[A]: Stack[A] = Stack()
+
+  def apply[A](elements: A*): Stack[A] = ListBasedStack(elements.toList)
 }
 
 private final case class ListBasedStack[A](elements: List[A]) extends Stack[A] {
@@ -22,4 +26,18 @@ private final case class ListBasedStack[A](elements: List[A]) extends Stack[A] {
       case head :: tail => Some(head -> copy(elements = tail))
       case _ => None
     }
+}
+
+private final case class MergedStack[A](inner: Stack[A], outer: Stack[A]) extends Stack[A] {
+  override type Self = MergedStack[A]
+
+  override def push(a: A): MergedStack[A] = copy(outer = outer.push(a))
+
+  override def pop: Option[(A, MergedStack[A])] =
+    outer.pop
+      .map { case (a, nStack) => a -> copy(outer = nStack) }
+      .orElse {
+        inner.pop
+          .map { case (a, nStack) => a -> copy(inner = nStack) }
+      }
 }

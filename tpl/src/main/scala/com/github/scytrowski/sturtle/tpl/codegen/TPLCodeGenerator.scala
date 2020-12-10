@@ -1,9 +1,9 @@
 package com.github.scytrowski.sturtle.tpl.codegen
 
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
-import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, ExitLoop, DefineFunction, Invoke, Loop, PopTo, PushFrom, PushValue}
-import com.github.scytrowski.sturtle.tpl.interpreter.{FunctionSignature, TPLCode, VariableSignature}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction._
+import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.syntax.list._
 
 object TPLCodeGenerator {
   def generate(node: SyntaxTree): TPLCode = node match {
@@ -21,8 +21,8 @@ object TPLCodeGenerator {
     generateAggregated(block.statements)
 
   private def generateForFunctionDefinition(definition: SyntaxTree.FunctionDefinition): TPLCode = {
-    val signature = FunctionSignature(definition.name.value, definition.parameters.length)
-    val parameterSignatures = definition.parameters.map(p => VariableSignature(p.value))
+    val signature = FunctionSignature(definition.name.value, definition.parameters.lengthN)
+    val parameterSignatures = definition.parameters.toList.map(p => VariableSignature(p.value))
     val popParameters = TPLCode(parameterSignatures.reverse.map(PopTo):_*)
     val code = (popParameters ++ generate(definition.body)).requireExit(PushValue(VoidValue))
     TPLCode(DefineFunction(signature, code))
@@ -64,7 +64,7 @@ object TPLCodeGenerator {
       case Expression.Name(value) => TPLCode.empty.withPush(PushFrom(VariableSignature(value)))
       case Expression.Static(value) => TPLCode.empty.withPush(PushValue(value))
       case Expression.FunctionCall(name, parameters) =>
-        val signature = FunctionSignature(name.value, parameters.length)
+        val signature = FunctionSignature(name.value, parameters.lengthN)
         generateAggregated(parameters).withPush(Invoke(signature))
     }
 

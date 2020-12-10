@@ -1,9 +1,11 @@
 package com.github.scytrowski.sturtle.tpl.interpreter
 
+import cats.Id
+import cats.effect.IO
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
 import org.scalatest.{Inside, OptionValues}
+import shapeless.Nat.{_0, _3, _6}
 
 class ScopeTest extends CommonSpecLike with Inside with OptionValues {
   "Scope" should {
@@ -15,8 +17,8 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       }
 
       "object is function" in {
-        val function = RuntimeFunction(
-          FunctionSignature("f", 3),
+        val function = RuntimeFunction.Stored(
+          FunctionSignature("f", _3),
           TPLCode.empty.withExit(PushValue(VoidValue))
         )
 
@@ -37,7 +39,10 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       }
 
       "signature points to function" in {
-        val function = RuntimeFunction(FunctionSignature("g", 6), TPLCode.empty.withExit(PushValue(VoidValue)))
+        val function = RuntimeFunction.Stored(
+          FunctionSignature("g", _6),
+          TPLCode.empty.withExit(PushValue(VoidValue))
+        )
         val scope = LayeredScope(
           ScopeType.Regular,
           Map(function.signature -> function),
@@ -45,6 +50,28 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
         )
 
         scope.getObject(function.signature).value mustBe function
+      }
+    }
+
+    "merge" should {
+      "use objects from outer scope as a first priority" in {
+        val varSignature = VariableSignature("a")
+        val funcSignature = FunctionSignature("f", _0)
+        val expectedValue = StringValue("expected value")
+        val expectedFunction = RuntimeFunction[IO](funcSignature).const(StringValue("expectedFunction"))
+        val scope1 = Scope.root
+          .putObject(RuntimeVariable(varSignature, StringValue("unexpected value")))
+          .putObject(RuntimeFunction[IO](funcSignature).const(StringValue("unexpectedFunction")))
+        val scope2 = Scope.root
+          .putObject(RuntimeVariable(varSignature, expectedValue))
+          .putObject(expectedFunction)
+
+        val merged = scope1.merge(scope2)
+
+        val actualValue = merged.getVariable(varSignature).value
+        val actualFunction = merged.getFunction(funcSignature).value
+        actualValue mustBe RuntimeVariable(varSignature, expectedValue)
+        actualFunction mustBe expectedFunction
       }
     }
 
@@ -58,7 +85,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
 
     "parent" when {
       "fallback scope is defined" in {
-        val parent = Scope.root
+        val parent = Scope.root[Id]
         val child = LayeredScope(
           ScopeType.WithinFunction,
           Map.empty,
@@ -81,7 +108,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
 
     "onTop" in {
       val someVariable = RuntimeVariable(VariableSignature("c"), BooleanValue(false))
-      val scope = LayeredScope(
+      val scope = LayeredScope[Id](
         ScopeType.WithinFunction,
         Map(someVariable.signature -> someVariable),
         None
@@ -94,6 +121,6 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
     }
   }
 
-  private def requireLayeredScope(scope: Scope): LayeredScope =
-    inside(scope) { case layered: LayeredScope => layered }
+  private def requireLayeredScope(scope: Scope[Id]): LayeredScope[Id] =
+    inside(scope) { case layered: LayeredScope[Id] => layered }
 }

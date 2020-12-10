@@ -1,10 +1,11 @@
 package com.github.scytrowski.sturtle.tpl.interpreter
 
+import cats.Id
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
 import org.scalatest.{Inside, OptionValues}
+import shapeless.Nat.{_2, _4, _5}
 
 class InterpreterContextTest extends CommonSpecLike with Inside with OptionValues {
   "InterpreterContext" when {
@@ -26,47 +27,45 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
       }
     }
 
-    "putVariable" should {
-      "succeed" in {
-        val signature = VariableSignature("b")
-        val value = StringValue("testtest123")
-
-        val ctx = InterpreterContext
-          .initial
-          .putVariable(signature, value)
-
-        ctx.scope.getObject(signature).value mustBe RuntimeVariable(signature, value)
-      }
-    }
-
     "getFunction" should {
       "succeed" in {
-        val signature = FunctionSignature("f", 4)
+        val signature = FunctionSignature("f", _4)
         val body = TPLCode.empty.withExit(PushValue(BooleanValue(true)))
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root.putObject(RuntimeFunction(signature, body)))
+          .copy(scope = Scope.root.putObject(RuntimeFunction.Stored(signature, body)))
 
-        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction(signature, body)
+        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction.Stored(signature, body)
       }
 
       "fail" in {
-        val signature = FunctionSignature("f", 5)
+        val signature = FunctionSignature("f", _5)
 
         expectFailure(InterpreterContext.initial.getFunction(signature)) mustBe FunctionNotFound(signature)
       }
     }
 
-    "putFunction" should {
-      "succeed" in {
-        val signature = FunctionSignature("g", 2)
+    "putObject" should {
+      "put variable" in {
+        val signature = VariableSignature("b")
+        val value = StringValue("testtest123")
+
+        val ctx = InterpreterContext
+          .initial
+          .putObject(RuntimeVariable(signature, value))
+
+        ctx.scope.getObject(signature).value mustBe RuntimeVariable(signature, value)
+      }
+
+      "put function" in {
+        val signature = FunctionSignature("g", _2)
         val body = TPLCode.empty.withExit(PushValue(BooleanValue(false)))
 
         val ctx = InterpreterContext
           .initial
-          .putFunction(signature, body)
+          .putObject(RuntimeFunction.Stored(signature, body))
 
-        ctx.scope.getObject(signature).value mustBe RuntimeFunction(signature, body)
+        ctx.scope.getObject(signature).value mustBe RuntimeFunction.Stored(signature, body)
       }
     }
 
@@ -77,7 +76,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
 
         val ctx = InterpreterContext
           .initial
-          .putVariable(signature, value)
+          .putObject(RuntimeVariable(signature, value))
 
         expectSuccess(ctx.pushFrom(signature)).stack.pop.value._1 mustBe value
       }
@@ -94,7 +93,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
         val value = NumberValue(4321)
 
         val ctx = InterpreterContext
-          .initial
+          .initial[Id]
           .copy(stack = Stack.empty.push(value))
 
         val (top, updatedCtx) = expectSuccess(ctx.pop)
@@ -114,7 +113,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
         val value = NumberValue(4321)
 
         val ctx = InterpreterContext
-          .initial
+          .initial[Id]
           .copy(stack = Stack.empty.push(value))
 
         val updatedCtx = expectSuccess(ctx.popTo(signature))

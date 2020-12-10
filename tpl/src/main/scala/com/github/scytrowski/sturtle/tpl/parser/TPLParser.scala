@@ -1,13 +1,13 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.data.NonEmptyList
-import cats.instances.list._
 import cats.syntax.traverse._
+import cats.instances.list._
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue, VoidValue}
-import com.github.scytrowski.sturtle.tpl.parser.ParseError.{EmptyBranch, InvalidBracketConstruction, InvalidName, UnexpectedToken, WrappedError}
+import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.parser.ParseError._
 
 object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
   import SyntaxTree._
@@ -81,7 +81,7 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
     for {
       _     <- require(Token.If)
       cs    <- cases
-      csNel <- nel(EmptyBranch)(cs)
+      csNel <- nel(EmptyBranch)(cs.toList)
     } yield Branch(csNel)
   }
 
@@ -126,7 +126,11 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
       expr <- expression
     } yield Assignment(name, expr)
 
-  private def parameterNameList: P[List[Name]] = parameterList(BracketType.Round).flatMap(_.map(expressionToName).sequence)
+  private def parameterNameList: P[List[Name]] =
+    parameterList(BracketType.Round).flatMap(_
+      .map(expressionToName)
+      .sequence
+    )
 
   private def expression: P[Expression] =
     expressionBlueprint.flatMap { blueprint =>

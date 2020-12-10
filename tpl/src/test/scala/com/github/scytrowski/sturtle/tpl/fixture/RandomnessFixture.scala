@@ -5,13 +5,24 @@ import org.scalatest.matchers.must.Matchers
 import scala.util.Random
 
 trait RandomnessFixture { this: Matchers =>
-  protected def randomInts(count: Int): List[Int] = List.fill(count)(Random.nextInt(Int.MaxValue))
+  protected def randomTriples(count: Int): List[(Double, Double, Double)] =
+    randomPairs(count)
+      .zip(randomDoubles(count))
+      .map { case ((a, b), c) => (a, b, c) }
 
-  protected def randomDoubles(count: Int): List[Double] = List.fill(count)(Random.nextDouble())
+  protected def randomPairs(count: Int): List[(Double, Double)] = randomDoubles(count).zip(randomDoubles(count))
+
+  protected def randomInts(count: Int): List[Int] = List.fill(count)(randomInt)
+
+  protected def randomDoubles(count: Int): List[Double] = List.fill(count)(randomDouble)
 
   protected def randomStrings(count: Int): List[String] = List.fill(count)(randomString)
 
   protected def randomNames(count: Int): List[String] = List.fill(count)(randomName)
+
+  protected def randomDouble: Double = Random.nextDouble()
+
+  protected def randomInt: Int = Random.nextInt(Int.MaxValue)
 
   protected def randomString: String = {
     val l = Random.nextInt(2048)

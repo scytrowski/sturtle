@@ -4,8 +4,8 @@ import cats.data.NonEmptyList
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
-import com.github.scytrowski.sturtle.tpl.interpreter.Value.{BooleanValue, NumberValue, StringValue}
 import org.scalatest.{Inside, OptionValues}
+import shapeless.Nat.{_1, _3}
 
 import scala.util.{Failure, Success, Try}
 
@@ -21,18 +21,18 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       val signature = VariableSignature("abc")
       val value = StringValue("test123")
       val ctx = InterpreterContext
-        .initial
-        .putVariable(signature, value)
+        .initial[Try]
+        .putObject(RuntimeVariable(signature, value))
 
       expectPush(ctx)(PushFrom(signature)) mustBe value
     }
 
     "interpret Invoke" in {
-      val signature = FunctionSignature("f", 1)
+      val signature = FunctionSignature("f", _1)
       val value = NumberValue(123)
       val body = TPLCode.empty.withExit(PushValue(value))
       val ctx = InterpreterContext
-        .initial
+        .initial[Try]
         .pushValue(StringValue("abcd"))
 
       expectPush(ctx)(DefineFunction(signature, body), Invoke(signature))
@@ -42,7 +42,7 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       val signature = VariableSignature("a")
       val value = StringValue("testtest")
       val ctx = InterpreterContext
-        .initial
+        .initial[Try]
         .pushValue(value)
 
       expectVariable(signature, ctx)(PopTo(signature)) mustBe value
@@ -62,26 +62,26 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
 
       "enter first case" in {
         val ctx = InterpreterContext
-          .initial
-          .putVariable(VariableSignature("a"), BooleanValue(true))
+          .initial[Try]
+          .putObject(RuntimeVariable(VariableSignature("a"), BooleanValue(true)))
 
         expectPush(ctx)(branch) mustBe StringValue("abc")
       }
 
       "enter second case" in {
         val ctx = InterpreterContext
-          .initial
-          .putVariable(VariableSignature("a"), BooleanValue(false))
-          .putVariable(VariableSignature("b"), BooleanValue(true))
+          .initial[Try]
+          .putObject(RuntimeVariable(VariableSignature("a"), BooleanValue(false)))
+          .putObject(RuntimeVariable(VariableSignature("b"), BooleanValue(true)))
 
         expectPush(ctx)(branch) mustBe StringValue("def")
       }
 
       "enter no case" in {
         val ctx = InterpreterContext
-          .initial
-          .putVariable(VariableSignature("a"), BooleanValue(false))
-          .putVariable(VariableSignature("b"), BooleanValue(false))
+          .initial[Try]
+          .putObject(RuntimeVariable(VariableSignature("a"), BooleanValue(false)))
+          .putObject(RuntimeVariable(VariableSignature("b"), BooleanValue(false)))
 
         expectEmptyStack(ctx)(branch)
       }
@@ -91,8 +91,8 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       "enter once" in {
         val signature = VariableSignature("a")
         val ctx = InterpreterContext
-          .initial
-          .putVariable(signature, BooleanValue(true))
+          .initial[Try]
+          .putObject(RuntimeVariable(signature, BooleanValue(true)))
         val condition = TPLCode.empty.withPush(PushFrom(signature))
         val body = TPLCode(
           PushValue(NumberValue(1337)),
@@ -112,26 +112,26 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
     }
 
     "interpret FunctionDefinition" in {
-      val signature = FunctionSignature("f", 3)
+      val signature = FunctionSignature("f", _3)
       val body = TPLCode.empty.withExit(PushValue(StringValue("abc")))
 
-      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction(signature, body)
+      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction.Stored(signature, body)
     }
 
     "interpret ExitLoop" in {
-      val scope = Scope.root.onTop.withinLoop
+      val scope = Scope.root[Try].onTop.withinLoop
       val ctx = InterpreterContext
-        .initial
+        .initial[Try]
         .copy(scope = scope)
 
       expectSuccess(ctx)(ExitLoop).scope.scopeType mustBe ScopeType.Regular
     }
 
     "interpret ExitFunction" in {
-      val scope = Scope.root.onTop.withinFunction
+      val scope = Scope.root[Try].onTop.withinFunction
       val returnValue = StringValue("1337")
       val ctx = InterpreterContext
-        .initial
+        .initial[Try]
         .copy(scope = scope)
 
       val updatedCtx = expectSuccess(ctx)(ExitFunction(PushValue(returnValue)))
@@ -148,7 +148,7 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       }
 
       "function not found" in {
-        val signature = FunctionSignature("f", 3)
+        val signature = FunctionSignature("f", _3)
 
         expectFailure()(Invoke(signature)) mustBe FunctionNotFound(signature)
       }
@@ -167,33 +167,33 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
     }
   }
 
-  private def expectPush(ctx: InterpreterContext = InterpreterContext.initial)
+  private def expectPush(ctx: InterpreterContext[Try] = InterpreterContext.initial)
                         (instructions: TPLInstruction*): Value =
     expectSuccess(ctx)(instructions:_*).stack.pop.map(_._1).value
 
-  private def expectFunction(signature: FunctionSignature, ctx: InterpreterContext = InterpreterContext.initial)
-                            (instructions: TPLInstruction*): RuntimeFunction =
+  private def expectFunction(signature: FunctionSignature, ctx: InterpreterContext[Try] = InterpreterContext.initial)
+                            (instructions: TPLInstruction*): RuntimeFunction[Try] =
     expectSuccess(ctx)(instructions:_*).scope.getFunction(signature).value
 
-  private def expectVariable(signature: VariableSignature, ctx: InterpreterContext = InterpreterContext.initial)
+  private def expectVariable(signature: VariableSignature, ctx: InterpreterContext[Try] = InterpreterContext.initial)
                             (instructions: TPLInstruction*): Value =
     expectSuccess(ctx)(instructions:_*).scope.getVariable(signature).value.value
 
-  private def expectEmptyStack(ctx: InterpreterContext = InterpreterContext.initial)(instructions: TPLInstruction*): Unit = {
+  private def expectEmptyStack(ctx: InterpreterContext[Try] = InterpreterContext.initial)(instructions: TPLInstruction*): Unit = {
     val updatedCtx = expectSuccess(ctx)(instructions:_*)
     updatedCtx.stack.pop.isDefined mustBe false
   }
 
-  private def expectFailure(ctx: InterpreterContext = InterpreterContext.initial)
+  private def expectFailure(ctx: InterpreterContext[Try] = InterpreterContext.initial)
                            (instructions: TPLInstruction*): InterpreterError =
     inside(interpret(ctx)(instructions:_*)) { case Left(error) => error }
 
-  private def expectSuccess(ctx: InterpreterContext = InterpreterContext.initial)
-                       (instructions: TPLInstruction*): InterpreterContext =
+  private def expectSuccess(ctx: InterpreterContext[Try] = InterpreterContext.initial)
+                       (instructions: TPLInstruction*): InterpreterContext[Try] =
     inside(interpret(ctx)(instructions:_*)) { case Right(value) => value }
 
-  private def interpret(ctx: InterpreterContext = InterpreterContext.initial)
-                       (instructions: TPLInstruction*): Either[InterpreterError, InterpreterContext] =
+  private def interpret(ctx: InterpreterContext[Try] = InterpreterContext.initial)
+                       (instructions: TPLInstruction*): Either[InterpreterError, InterpreterContext[Try]] =
     inside(new TPLInterpreter[Try].interpret(TPLCode(instructions:_*), ctx)) {
       case Success(ctx) => Right(ctx)
       case Failure(InterpreterException(error)) => Left(error)
