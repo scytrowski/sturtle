@@ -4,6 +4,7 @@ import cats.Id
 import cats.effect.IO
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.{Inside, OptionValues}
 import shapeless.Nat.{_0, _3, _6}
 
@@ -28,7 +29,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
 
     "getObject" when {
       "signature points to variable" in {
-        val variable = RuntimeVariable(VariableSignature("b"), NumberValue(1337))
+        val variable = RuntimeVariable(VariableSignature("b"), NumberValue(Complex.real(1337)))
         val scope = LayeredScope(
           ScopeType.Regular,
           Map(variable.signature -> variable),

@@ -2,6 +2,8 @@ package com.github.scytrowski.sturtle.tpl.module
 
 import cats.MonadError
 import cats.syntax.applicative._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.DivisionByZero
@@ -68,24 +70,39 @@ final class SpecialFunctionsModule[F[+_]: MonadError[*[_], Throwable]] extends N
 
   private val multi = RuntimeFunction(SpecialFunctions.multi).native(binaryNumericFunction { case (l, r) => NumberValue(l * r) })
 
-  private val div = RuntimeFunction(SpecialFunctions.div).native(binaryNumericFunctionF {
-    case (l, r) if r != 0 => NumberValue(l / r).pure[F]
-    case _ => raiseError(DivisionByZero)
+  private val div = RuntimeFunction(SpecialFunctions.div).native(binaryNumericFunctionF { case (l, r) =>
+    l.by(r)
+      .map(NumberValue)
+      .fold[F[NumberValue]](raiseError(DivisionByZero))(_.pure)
   })
 
-  private val point = RuntimeFunction(SpecialFunctions.point).native(binaryNumericFunction { case (x, y) => PointValue(Point.cartesian(x, y)) })
+  private val point = RuntimeFunction(SpecialFunctions.point).native(binaryNumericFunctionF { case (x, y) =>
+    for {
+      xReal <- wrap(requireReal(x))
+      yReal <- wrap(requireReal(y))
+    } yield PointValue(Point.cartesian(xReal, yReal))
+  })
 
-  private val vector = RuntimeFunction(SpecialFunctions.vector).native(binaryNumericFunction { case (dx, dy) => VectorValue(Vector.cartesian(dx, dy)) })
+  private val vector = RuntimeFunction(SpecialFunctions.vector).native(binaryNumericFunctionF { case (dx, dy) =>
+    for {
+      dxReal <- wrap(requireReal(dx))
+      dyReal <- wrap(requireReal(dy))
+    } yield VectorValue(Vector.cartesian(dxReal, dyReal))
+  })
 
-  private val angle = RuntimeFunction(SpecialFunctions.angle).native(unaryNumericFunction(v => AngleValue(Angle.radians(v))))
+  private val angle = RuntimeFunction(SpecialFunctions.angle).native(unaryNumericFunctionF { v =>
+    wrap(requireReal(v))
+      .map(Angle.radians)
+      .map(AngleValue)
+  })
 
   private val color = RuntimeFunction(SpecialFunctions.color).native { params =>
     wrap {
       for {
-        r <- params.require[NumericValue](_0)
-        g <- params.require[NumericValue](_1)
-        b <- params.require[NumericValue](_2)
-      } yield ColorValue(Color.decimal(r.numericValue, g.numericValue, b.numericValue))
+        r <- params.require[NumericValue](_0).flatMap(v => requireReal(v.numericValue))
+        g <- params.require[NumericValue](_1).flatMap(v => requireReal(v.numericValue))
+        b <- params.require[NumericValue](_2).flatMap(v => requireReal(v.numericValue))
+      } yield ColorValue(Color.decimal(r, g, b))
     }
   }
 }

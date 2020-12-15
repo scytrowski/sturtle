@@ -4,6 +4,7 @@ import cats.effect.IO
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter._
 import com.github.scytrowski.sturtle.tpl.module.Module
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.OptionValues
 import org.scalatest.prop.TableDrivenPropertyChecks
 import shapeless.Nat._5
@@ -14,7 +15,7 @@ class TPLLoaderTest extends EffectSpecLike with TableDrivenPropertyChecks with O
       "raw module" in {
         val ctx = InterpreterContext
           .initial[IO]
-          .putObject(RuntimeVariable(VariableSignature("b"), NumberValue(1337)))
+          .putObject(RuntimeVariable(VariableSignature("b"), NumberValue(Complex.real(1337))))
         val module = Module.Raw(TPLCode.empty.append(TPLInstruction.ExitLoop))
 
         load(module, ctx) mustBe ctx

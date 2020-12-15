@@ -1,6 +1,6 @@
 package com.github.scytrowski.sturtle.tpl.interpreter
 
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.InvalidValue
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{InvalidValue, RealNumberExpected}
 import shapeless.ops.nat.{Diff, ToInt}
 import shapeless.{Nat, Sized, Succ}
 
@@ -10,6 +10,11 @@ sealed abstract class PList {
   type ParamsN <: Nat
 
   def at(index: Nat)(implicit diff: Diff[ParamsN, Succ[index.N]], toInt: ToInt[index.N]): Value
+
+  final def requireReal(index: Nat)
+                       (implicit diff: Diff[ParamsN, Succ[index.N]], toInt: ToInt[index.N], reprTag: ClassTag[NumberValue]): Either[InterpreterError, Double] =
+    require[NumberValue](index)
+      .flatMap(_.value.asReal.toRight(RealNumberExpected))
 
   final def require[R <: Value](index: Nat)
                                (implicit diff: Diff[ParamsN, Succ[index.N]], toInt: ToInt[index.N], reprTag: ClassTag[R]): Either[InterpreterError, R] =

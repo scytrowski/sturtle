@@ -4,6 +4,7 @@ import cats.data.NonEmptyList
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.{Inside, OptionValues}
 import shapeless.Nat.{_1, _3}
 
@@ -12,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
   "TPLInterpreter" should {
     "interpret PushValue" in {
-      val value = NumberValue(1337)
+      val value = NumberValue(Complex.real(1337))
 
       expectPush()(PushValue(value)) mustBe value
     }
@@ -29,7 +30,7 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
 
     "interpret Invoke" in {
       val signature = FunctionSignature("f", _1)
-      val value = NumberValue(123)
+      val value = NumberValue(Complex.real(123))
       val body = TPLCode.empty.withExit(PushValue(value))
       val ctx = InterpreterContext
         .initial[Try]
@@ -95,17 +96,17 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
           .putObject(RuntimeVariable(signature, BooleanValue(true)))
         val condition = TPLCode.empty.withPush(PushFrom(signature))
         val body = TPLCode(
-          PushValue(NumberValue(1337)),
+          PushValue(NumberValue(Complex.real(1337))),
           PushValue(BooleanValue(false)),
           PopTo(signature)
         )
 
-        expectPush(ctx)(Loop(condition, body)) mustBe NumberValue(1337)
+        expectPush(ctx)(Loop(condition, body)) mustBe NumberValue(Complex.real(1337))
       }
 
       "do not enter" in {
         val condition = TPLCode.empty.withPush(PushValue(BooleanValue(false)))
-        val body = TPLCode(PushValue(NumberValue(1337)))
+        val body = TPLCode(PushValue(NumberValue(Complex.real(1337))))
 
         expectEmptyStack()(Loop(condition, body))
       }

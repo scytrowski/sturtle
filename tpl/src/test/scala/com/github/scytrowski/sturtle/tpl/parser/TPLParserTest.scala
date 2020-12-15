@@ -8,6 +8,7 @@ import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, 
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue, VoidValue}
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.{UnexpectedEndOfStream, UnexpectedToken}
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 
 class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside { gen: SyntaxTreeGenerator =>
@@ -174,10 +175,10 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
       inside(parseSingleStatement(tokens)) { case Block((counterAssignment: Assignment) :: (loop: Loop) :: Nil) =>
         val counterName = counterAssignment.variableName
 
-        counterAssignment.value mustBe Static(NumberValue(0))
+        counterAssignment.value mustBe Static(NumberValue(Complex.zero))
         loop.condition mustBe FunctionCall(SpecialNames.lessOrEqual, List(counterName, Name("a")))
         loop.body mustBe Block(List(
-          FunctionCall(SpecialNames.add, List(counterName, Static(NumberValue(1)))),
+          FunctionCall(SpecialNames.add, List(counterName, Static(NumberValue(Complex.one)))),
           Break
         ))
       }
@@ -303,9 +304,9 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
       }
 
       "number" in {
-        val tokens = List(Token.NumberToken(1337))
+        val tokens = List(Token.NumberToken(Complex.real(1337)))
 
-        parseExpression(tokens) mustBe Static(NumberValue(1337))
+        parseExpression(tokens) mustBe Static(NumberValue(Complex.real(1337)))
       }
 
       "string" in {
@@ -317,30 +318,30 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
       "point" in {
         val tokens = List(
           Token.RoundBracketOpen,
-          Token.NumberToken(1.23),
+          Token.NumberToken(Complex.real(1.23)),
           Token.Comma,
-          Token.NumberToken(4.56),
+          Token.NumberToken(Complex.real(4.56)),
           Token.RoundBracketClose
         )
 
         parseExpression(tokens) mustBe gen.point(
-          Static(NumberValue(1.23)),
-          Static(NumberValue(4.56))
+          Static(NumberValue(Complex.real(1.23))),
+          Static(NumberValue(Complex.real(4.56)))
         )
       }
 
       "vector" in {
         val tokens = List(
           Token.SquareBracketOpen,
-          Token.NumberToken(9.87),
+          Token.NumberToken(Complex.real(9.87)),
           Token.Comma,
-          Token.NumberToken(6.54),
+          Token.NumberToken(Complex.real(6.54)),
           Token.SquareBracketClose
         )
 
         parseExpression(tokens) mustBe gen.vector(
-          Static(NumberValue(9.87)),
-          Static(NumberValue(6.54))
+          Static(NumberValue(Complex.real(9.87))),
+          Static(NumberValue(Complex.real(6.54)))
         )
       }
 

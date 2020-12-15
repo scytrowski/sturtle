@@ -9,74 +9,92 @@ import com.github.scytrowski.sturtle.core.TurtleQueryAnswer.{AngleAnswer, FillCo
 import com.github.scytrowski.sturtle.core.geometry.{Angle, Point}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.core.{TurtleCommand, TurtleController, TurtleQuery, TurtleQueryAnswer}
-import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
+import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.RealNumberExpected
 import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 import shapeless.Nat
 
-class TurtleFunctionsModuleTest extends EffectSpecLike with Inside {
+class TurtleFunctionsModuleTest extends EffectSpecLike with RandomnessFixture with TableFixture with Inside {
   "TurtleFunctionsModule" when {
     "goto" in {
-      val to = Point(1, 2)
+      forAll(Table("p", randomElements[Point](1000):_*)) { p =>
+        val (result, data) = invokeFunction()(TurtleFunctions.goto, PointValue(p))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.goto, PointValue(to))
-
-      result mustBe VoidValue
-      data.commands mustBe List(MoveTo(to))
+        result mustBe VoidValue
+        data.commands mustBe List(MoveTo(p))
+      }
     }
 
-    "forward" in {
-      val radius = 17.19
+    "forward" when {
+      "succeed" in {
+        forAll(Table("r", randomElements[Double](1000):_*)) { r =>
+          val (result, data) = invokeFunction()(TurtleFunctions.forward, NumberValue(Complex.real(r)))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.forward, NumberValue(radius))
+          result mustBe VoidValue
+          data.commands mustBe List(MoveForward(r))
+        }
+      }
 
-      result mustBe VoidValue
-      data.commands mustBe List(MoveForward(radius))
+      "fail" in {
+        forAll(Table("r", randomElements[Double](1000, _ != 0):_*)) { r =>
+          expectFailure()(TurtleFunctions.forward, NumberValue(Complex.imaginary(r))) mustBe RealNumberExpected
+        }
+      }
     }
 
-    "backward" in {
-      val radius = 913.737
+    "backward" when {
+      "succeed" in {
+        forAll(Table("r", randomElements[Double](1000):_*)) { r =>
+          val (result, data) = invokeFunction()(TurtleFunctions.backward, NumberValue(Complex.real(r)))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.backward, NumberValue(radius))
+          result mustBe VoidValue
+          data.commands mustBe List(MoveBackward(r))
+        }
+      }
 
-      result mustBe VoidValue
-      data.commands mustBe List(MoveBackward(radius))
+      "fail" in {
+        forAll(Table("r", randomElements[Double](1000):_*)) { r =>
+          expectFailure()(TurtleFunctions.backward, NumberValue(Complex.imaginary(r))) mustBe RealNumberExpected
+        }
+      }
     }
 
     "pos" in {
-      val pos = Point(15, -17)
+      forAll(Table("p", randomElements[Point](1000):_*)) { p =>
+        val (result, data) = invokeFunction(PositionAnswer(p))(TurtleFunctions.pos)
 
-      val (result, data) = invokeFunction(PositionAnswer(pos))(TurtleFunctions.pos)
-
-      result mustBe PointValue(pos)
-      data.queries mustBe List(GetPosition)
+        result mustBe PointValue(p)
+        data.queries mustBe List(GetPosition)
+      }
     }
 
     "left" in {
-      val angle = Angle(2.1972)
+      forAll(Table("a", randomElements[Angle](1000):_*)) { a =>
+        val (result, data) = invokeFunction()(TurtleFunctions.left, AngleValue(a))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.left, AngleValue(angle))
-
-      result mustBe VoidValue
-      data.commands mustBe List(RotateLeftBy(angle))
+        result mustBe VoidValue
+        data.commands mustBe List(RotateLeftBy(a))
+      }
     }
 
     "right" in {
-      val angle = Angle(1.0003)
+      forAll(Table("v", randomElements[Angle](1000):_*)) { a =>
+        val (result, data) = invokeFunction()(TurtleFunctions.right, AngleValue(a))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.right, AngleValue(angle))
-
-      result mustBe VoidValue
-      data.commands mustBe List(RotateRightBy(angle))
+        result mustBe VoidValue
+        data.commands mustBe List(RotateRightBy(a))
+      }
     }
 
     "angle" in {
-      val angle = Angle(0.123)
+      forAll(Table("a", randomElements[Angle](1000):_*)) { a =>
+        val (result, data) = invokeFunction(AngleAnswer(a))(TurtleFunctions.angle)
 
-      val (result, data) = invokeFunction(AngleAnswer(angle))(TurtleFunctions.angle)
-
-      result mustBe AngleValue(angle)
-      data.queries mustBe List(GetAngle)
+        result mustBe AngleValue(a)
+        data.queries mustBe List(GetAngle)
+      }
     }
 
     "fill" in {
@@ -108,39 +126,39 @@ class TurtleFunctionsModuleTest extends EffectSpecLike with Inside {
     }
 
     "setPenColor" in {
-      val color = Color.rgb(17, 2, 78)
+      forAll(Table("c", randomElements[Color](1000):_*)) { c =>
+        val (result, data) = invokeFunction()(TurtleFunctions.setPenColor, ColorValue(c))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.setPenColor, ColorValue(color))
-
-      result mustBe VoidValue
-      data.commands mustBe List(SetPenColor(color))
+        result mustBe VoidValue
+        data.commands mustBe List(SetPenColor(c))
+      }
     }
 
     "getPenColor" in {
-      val color = Color.rgb(25, 50, 75)
+      forAll(Table("c", randomElements[Color](1000):_*)) { c =>
+        val (result, data) = invokeFunction(PenColorAnswer(c))(TurtleFunctions.getPenColor)
 
-      val (result, data) = invokeFunction(PenColorAnswer(color))(TurtleFunctions.getPenColor)
-
-      result mustBe ColorValue(color)
-      data.queries mustBe List(GetPenColor)
+        result mustBe ColorValue(c)
+        data.queries mustBe List(GetPenColor)
+      }
     }
 
     "setFillColor" in {
-      val color = Color.rgb(39, 15, 111)
+      forAll(Table("c", randomElements[Color](1000):_*)) { c =>
+        val (result, data) = invokeFunction()(TurtleFunctions.setFillColor, ColorValue(c))
 
-      val (result, data) = invokeFunction()(TurtleFunctions.setFillColor, ColorValue(color))
-
-      result mustBe VoidValue
-      data.commands mustBe List(SetFillColor(color))
+        result mustBe VoidValue
+        data.commands mustBe List(SetFillColor(c))
+      }
     }
 
     "getFillColor" in {
-      val color = Color.rgb(100, 150, 200)
+      forAll(Table("c", randomElements[Color](1000):_*)) { c =>
+        val (result, data) = invokeFunction(FillColorAnswer(c))(TurtleFunctions.getFillColor)
 
-      val (result, data) = invokeFunction(FillColorAnswer(color))(TurtleFunctions.getFillColor)
-
-      result mustBe ColorValue(color)
-      data.queries mustBe List(GetFillColor)
+        result mustBe ColorValue(c)
+        data.queries mustBe List(GetFillColor)
+      }
     }
   }
 
@@ -165,6 +183,28 @@ class TurtleFunctionsModuleTest extends EffectSpecLike with Inside {
     } yield result._1 -> data
 
     io.unsafeRunSync()
+  }
+
+  private def expectFailure[PN <: Nat](answer: TurtleQueryAnswer = AngleAnswer(Angle.radians(0.123)))(signature: FunctionSignature.Aux[PN], stack: Value*): InterpreterError = {
+    val ctx = stack.foldLeft(InterpreterContext.initial[IO])(_.pushValue(_))
+
+    val io = for {
+      dataRef  <- Ref.of[IO, TestData](TestData(answer = answer))
+      module   = new TurtleFunctionsModule[IO].apply(testController(dataRef))
+      result   <- {
+        val func = inside(module) { case Module.Prepared(objects) =>
+          objects
+            .find(_.signature == signature)
+            .value
+            .asInstanceOf[RuntimeFunction[IO]]
+        }
+        func
+          .invoke(testInterpreter, ctx)
+          .attempt
+      }
+    } yield result
+
+    inside(io.unsafeRunSync()) { case Left(InterpreterException(error)) => error }
   }
 
   private def testController(dataRef: Ref[IO, TestData]): TurtleController[IO] =

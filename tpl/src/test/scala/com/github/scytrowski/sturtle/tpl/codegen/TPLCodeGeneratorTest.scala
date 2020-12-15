@@ -5,6 +5,7 @@ import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Block, Expression}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
 import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, FunctionSignature, NumberValue, StringValue, TPLCode, TPLInstruction, VariableSignature, VoidValue}
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 import shapeless.Nat._3
 
@@ -31,7 +32,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
         }
 
         "expression is Static" in {
-          val value = NumberValue(-1.23456)
+          val value = NumberValue(Complex.real(-1.23456))
 
           generateSingleInstruction(Expression.Static(value)) mustBe PushValue(value)
         }
@@ -114,7 +115,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
         }
 
         "multiple conditional branches" in {
-          val aReturnValue = NumberValue(1)
+          val aReturnValue = NumberValue(Complex.one)
           val bReturnValue = StringValue("d")
           val cReturnValue = BooleanValue(false)
           val branch = SyntaxTree.Branch(NonEmptyList.of(
@@ -141,7 +142,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
 
         "single conditional branch and default branch" in {
           val aReturnValue = VoidValue
-          val defaultReturnValue = NumberValue(1337)
+          val defaultReturnValue = NumberValue(Complex.real(1337))
           val branch = SyntaxTree.Branch(NonEmptyList.of(
             Case.Conditional(Expression.Name("a"), Block(List(SyntaxTree.Return(Expression.Static(aReturnValue))))),
             Case.Default(Block(List(SyntaxTree.Return(Expression.Static(defaultReturnValue)))))
@@ -160,7 +161,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
         }
 
         "multiple conditional branches and default branch" in {
-          val aReturnValue = NumberValue(1)
+          val aReturnValue = NumberValue(Complex.one)
           val bReturnValue = StringValue("d")
           val cReturnValue = BooleanValue(false)
           val defaultReturnValue = VoidValue

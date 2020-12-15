@@ -5,8 +5,9 @@ import cats.syntax.either._
 import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.DivisionByZero
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{DivisionByZero, RealNumberExpected}
 import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import shapeless.Nat
@@ -22,7 +23,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
 
       "return false" in {
         val left = StringValue("1337")
-        val right = NumberValue(1337)
+        val right = NumberValue(Complex.real(1337))
 
         invokeFunction(SpecialFunctions.equal, left, right) mustBe BooleanValue(false)
       }
@@ -37,43 +38,43 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
 
       "return false" in {
         val left = StringValue("1337")
-        val right = NumberValue(1337)
+        val right = NumberValue(Complex.real(1337))
 
         invokeFunction(SpecialFunctions.notEqual, left, right) mustBe BooleanValue(true)
       }
     }
 
     "less" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
-        val left = NumberValue(l)
-        val right = NumberValue(r)
+      forAll(Table(("l", "r"), randomPairs[Double](100):_*)) { case (l, r) =>
+        val left = NumberValue(Complex.real(l))
+        val right = NumberValue(Complex.real(r))
 
         invokeFunction(SpecialFunctions.less, left, right) mustBe BooleanValue(l < r)
       }
     }
 
     "lessOrEqual" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
-        val left = NumberValue(l)
-        val right = NumberValue(r)
+      forAll(Table(("l", "r"), randomPairs[Double](100):_*)) { case (l, r) =>
+        val left = NumberValue(Complex.real(l))
+        val right = NumberValue(Complex.real(r))
 
         invokeFunction(SpecialFunctions.lessOrEqual, left, right) mustBe BooleanValue(l <= r)
       }
     }
 
     "greater" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
-        val left = NumberValue(l)
-        val right = NumberValue(r)
+      forAll(Table(("l", "r"), randomPairs[Double](100):_*)) { case (l, r) =>
+        val left = NumberValue(Complex.real(l))
+        val right = NumberValue(Complex.real(r))
 
         invokeFunction(SpecialFunctions.greater, left, right) mustBe BooleanValue(l > r)
       }
     }
 
     "greaterOrEqual" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
-        val left = NumberValue(l)
-        val right = NumberValue(r)
+      forAll(Table(("l", "r"), randomPairs[Double](100):_*)) { case (l, r) =>
+        val left = NumberValue(Complex.real(l))
+        val right = NumberValue(Complex.real(r))
 
         invokeFunction(SpecialFunctions.greaterOrEqual, left, right) mustBe BooleanValue(l >= r)
       }
@@ -106,15 +107,15 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
     }
 
     "plus" in {
-      forAll(Table("v", randomDoubles(100):_*)) { v =>
-        val value = NumberValue(v)
+      forAll(Table("v", randomElements[Double](100):_*)) { v =>
+        val value = NumberValue(Complex.real(v))
 
         invokeFunction(SpecialFunctions.plus, value) mustBe value
       }
     }
 
     "add" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
+      forAll(Table(("l", "r"), randomPairs[Complex](100):_*)) { case (l, r) =>
         val left = NumberValue(l)
         val right = NumberValue(r)
 
@@ -123,7 +124,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
     }
 
     "minus" in {
-      forAll(Table("v", randomDoubles(100):_*)) { v =>
+      forAll(Table("v", randomElements[Complex](100):_*)) { v =>
         val value = NumberValue(v)
 
         invokeFunction(SpecialFunctions.minus, value) mustBe NumberValue(-v)
@@ -131,7 +132,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
     }
 
     "sub" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
+      forAll(Table(("l", "r"), randomPairs[Complex](100):_*)) { case (l, r) =>
         val left = NumberValue(l)
         val right = NumberValue(r)
 
@@ -140,7 +141,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
     }
 
     "multi" in {
-      forAll(Table(("l", "r"), randomPairs(100):_*)) { case (l, r) =>
+      forAll(Table(("l", "r"), randomPairs[Complex](100):_*)) { case (l, r) =>
         val left = NumberValue(l)
         val right = NumberValue(r)
 
@@ -150,56 +151,100 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
 
     "div" when {
       "succeed" in {
-        val pairs = randomPairs(1000).filter(_._2 != 0)
+        val pairs = randomPairs[Complex](1000).filter(_._2 != Complex.zero)
         forAll(Table(("l", "r"), pairs:_*)) { case (l, r) =>
           val left = NumberValue(l)
           val right = NumberValue(r)
 
-          invokeFunction(SpecialFunctions.div, left, right) mustBe NumberValue(l / r)
+          invokeFunction(SpecialFunctions.div, left, right) mustBe NumberValue(l.by(r).value)
         }
       }
 
       "fail" in {
-        val left = NumberValue(1337)
-        val right = NumberValue(0)
+        val left = NumberValue(Complex.real(1337))
+        val right = NumberValue(Complex.zero)
 
         expectFailure(SpecialFunctions.div, left, right) mustBe DivisionByZero
       }
     }
 
-    "point" in {
-      forAll(Table(("x", "y"), randomPairs(100):_*)) { case (x, y) =>
-        val left = NumberValue(x)
-        val right = NumberValue(y)
+    "point" when {
+      "succeed" in {
+        forAll(Table(("x", "y"), randomPairs[Double](100):_*)) { case (x, y) =>
+          val left = NumberValue(Complex.real(x))
+          val right = NumberValue(Complex.real(y))
 
-        invokeFunction(SpecialFunctions.point, left, right) mustBe PointValue(Point.cartesian(x, y))
+          invokeFunction(SpecialFunctions.point, left, right) mustBe PointValue(Point.cartesian(x, y))
+        }
+      }
+
+      "fail" in {
+        forAll(Table(("x", "y"), randomPairs[Double](100, _ != 0):_*)) { case (v, r) =>
+          val x = NumberValue(Complex.imaginary(v))
+          val y = NumberValue(Complex.imaginary(r))
+
+          expectFailure(SpecialFunctions.point, x, y) mustBe RealNumberExpected
+        }
       }
     }
 
-    "vector" in {
-      forAll(Table(("dx", "dy"), randomPairs(100):_*)) { case (dx, dy) =>
-        val left = NumberValue(dx)
-        val right = NumberValue(dy)
+    "vector" when {
+      "succeed" in {
+        forAll(Table(("dx", "dy"), randomPairs[Double](100):_*)) { case (dx, dy) =>
+          val left = NumberValue(Complex.real(dx))
+          val right = NumberValue(Complex.real(dy))
 
-        invokeFunction(SpecialFunctions.vector, left, right) mustBe VectorValue(Vector.cartesian(dx, dy))
+          invokeFunction(SpecialFunctions.vector, left, right) mustBe VectorValue(Vector.cartesian(dx, dy))
+        }
+      }
+
+      "fail" in {
+        forAll(Table(("x", "y"), randomPairs[Double](100, _ != 0):_*)) { case (v, r) =>
+          val dx = NumberValue(Complex.imaginary(v))
+          val dy = NumberValue(Complex.imaginary(r))
+
+          expectFailure(SpecialFunctions.vector, dx, dy) mustBe RealNumberExpected
+        }
       }
     }
 
-    "angle" in {
-      forAll(Table("v", randomDoubles(100):_*)) { v =>
-        val value = NumberValue(v)
+    "angle" when {
+      "succeed" in {
+        forAll(Table("v", randomElements[Double](100):_*)) { v =>
+          val value = NumberValue(Complex.real(v))
 
-        invokeFunction(SpecialFunctions.angle, value) mustBe AngleValue(Angle.radians(v))
+          invokeFunction(SpecialFunctions.angle, value) mustBe AngleValue(Angle.radians(v))
+        }
+      }
+
+      "fail" in {
+        forAll(Table("v", randomElements[Double](100):_*)) { v =>
+          val value = NumberValue(Complex.imaginary(v))
+
+          expectFailure(SpecialFunctions.angle, value) mustBe RealNumberExpected
+        }
       }
     }
 
-    "color" in {
-      forAll(Table(("r", "g", "b"), randomTriples(1000):_*)) { case (r, g, b) =>
-        val red = NumberValue(r)
-        val green = NumberValue(g)
-        val blue = NumberValue(b)
+    "color" when {
+      "succeed" in {
+        forAll(Table(("r", "g", "b"), randomTriples[Double](1000):_*)) { case (r, g, b) =>
+          val red = NumberValue(Complex.real(r))
+          val green = NumberValue(Complex.real(g))
+          val blue = NumberValue(Complex.real(b))
 
-        invokeFunction(SpecialFunctions.color, red, green, blue) mustBe ColorValue(Color.decimal(r, g, b))
+          invokeFunction(SpecialFunctions.color, red, green, blue) mustBe ColorValue(Color.decimal(r, g, b))
+        }
+      }
+
+      "fail" in {
+        forAll(Table(("r", "g", "b"), randomTriples[Double](1000, _ != 0):_*)) { case (r, g, b) =>
+          val red = NumberValue(Complex.imaginary(r))
+          val green = NumberValue(Complex.imaginary(g))
+          val blue = NumberValue(Complex.imaginary(b))
+
+          expectFailure(SpecialFunctions.color, red, green, blue) mustBe RealNumberExpected
+        }
       }
     }
   }

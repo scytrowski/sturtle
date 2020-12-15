@@ -3,6 +3,7 @@ package com.github.scytrowski.sturtle.tpl.lexer
 import cats.MonadError
 import com.github.scytrowski.sturtle.tpl.lexer.LexerError.{InvalidInteger, InvalidNumber, InvalidSymbol, UnclosedString}
 import com.github.scytrowski.sturtle.tpl.parser.Token
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import fs2.{Pipe, Stream}
 
 import scala.language.postfixOps
@@ -84,10 +85,10 @@ final class TPLLexer[F[_]](implicit monadError: MonadError[F, Throwable]) extend
     val (value, r1) = extractNumberValue(line)
     if (r1.startsWith("e") || r1.startsWith("E"))
       extractInteger(r1.tail, lineNumber).flatMap { case (expValue, r2) =>
-        parseNumber(s"${value}E$expValue", lineNumber) ++ tokenizeLine(r2, lineNumber)
+        parseComplex(s"${value}E$expValue", lineNumber, r2)
       }
     else
-      parseNumber(value, lineNumber) ++ tokenizeLine(r1, lineNumber)
+      parseComplex(value, lineNumber, r1)
   }
 
   private def extractInteger(line: String, lineNumber: Long): Stream[F, (String, String)] = {
@@ -110,9 +111,17 @@ final class TPLLexer[F[_]](implicit monadError: MonadError[F, Throwable]) extend
     number -> line.drop(number.length)
   }
 
-  private def parseNumber(str: String, lineNumber: Long): Stream[F, NumberToken] =
+  private def parseComplex(str: String, lineNumber: Long, remaining: String): Stream[F, Token] =
+    parseNumber(str, lineNumber).flatMap { n =>
+      if (remaining.startsWith("i"))
+        Stream(NumberToken(Complex.imaginary(n))) ++ tokenizeLine(remaining.tail, lineNumber)
+      else
+        Stream(NumberToken(Complex.real(n))) ++ tokenizeLine(remaining, lineNumber)
+    }
+
+  private def parseNumber(str: String, lineNumber: Long): Stream[F, Double] =
     str.toDoubleOption match {
-      case Some(value) => Stream(NumberToken(value))
+      case Some(value) => Stream(value)
       case None        => raiseError(InvalidNumber(lineNumber))
     }
 

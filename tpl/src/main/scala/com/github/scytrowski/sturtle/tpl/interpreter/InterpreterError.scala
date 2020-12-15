@@ -13,4 +13,5 @@ object InterpreterError {
   case object NotInFunction extends InterpreterError
   case object NotInLoop extends InterpreterError
   case object DivisionByZero extends InterpreterError
+  case object RealNumberExpected extends InterpreterError
 }

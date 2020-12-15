@@ -4,6 +4,7 @@ import cats.Id
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.{Inside, OptionValues}
 import shapeless.Nat.{_2, _4, _5}
 
@@ -12,7 +13,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
     "getVariable" should {
       "succeed" in {
         val signature = VariableSignature("a")
-        val value = NumberValue(1234)
+        val value = NumberValue(Complex.real(1234))
         val ctx = InterpreterContext
           .initial
           .copy(scope = Scope.root.putObject(RuntimeVariable(signature, value)))
@@ -90,7 +91,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
 
     "pop" should {
       "succeed" in {
-        val value = NumberValue(4321)
+        val value = NumberValue(Complex.real(4321))
 
         val ctx = InterpreterContext
           .initial[Id]
@@ -110,7 +111,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
     "popTo" should {
       "succeed" in {
         val signature = VariableSignature("a")
-        val value = NumberValue(4321)
+        val value = NumberValue(Complex.real(4321))
 
         val ctx = InterpreterContext
           .initial[Id]

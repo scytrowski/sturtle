@@ -4,6 +4,7 @@ import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Function
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Break, Loop}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
+import com.github.scytrowski.sturtle.tpl.types.Complex
 
 class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
   "SyntaxTreeGenerator" should {
@@ -13,11 +14,11 @@ class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { 
       val body = Block(List(Break))
 
       gen.repeat(times, body, counter) mustBe Block(List(
-        Assignment(counter, Static(NumberValue(0))),
+        Assignment(counter, Static(NumberValue(Complex.zero))),
         Loop(
           FunctionCall(SpecialNames.lessOrEqual, List(counter, times)),
           Block(
-            FunctionCall(SpecialNames.add, List(counter, Static(NumberValue(1)))) +:
+            FunctionCall(SpecialNames.add, List(counter, Static(NumberValue(Complex.one)))) +:
               body.statements
           )
         )
@@ -109,7 +110,7 @@ class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { 
     "generate increment" in {
       val a = Name("a")
 
-      gen.increment(a) mustBe FunctionCall(SpecialNames.add, List(a, Static(NumberValue(1))))
+      gen.increment(a) mustBe FunctionCall(SpecialNames.add, List(a, Static(NumberValue(Complex.one))))
     }
 
     "generate add" in {
@@ -147,7 +148,7 @@ class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { 
     }
 
     "generate number" in {
-      val v = -1.337
+      val v = Complex.real(-1.337)
 
       gen.number(v) mustBe Static(NumberValue(v))
     }

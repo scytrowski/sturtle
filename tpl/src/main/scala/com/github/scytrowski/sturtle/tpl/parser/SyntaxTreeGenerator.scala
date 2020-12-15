@@ -3,11 +3,12 @@ package com.github.scytrowski.sturtle.tpl.parser
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Expression, Loop}
 import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
+import com.github.scytrowski.sturtle.tpl.types.Complex
 
 trait SyntaxTreeGenerator {
   protected def repeat(times: Expression, body: Block, counter: Name = SpecialNames.temporaryVariable): Block =
     Block(List(
-      assignment(counter, number(0)),
+      assignment(counter, number(Complex.zero)),
       loop(
         lessOrEqual(counter, times),
         Block(increment(counter) +: body.statements)
@@ -50,7 +51,7 @@ trait SyntaxTreeGenerator {
     FunctionCall(SpecialNames.plus, List(value))
 
   protected def increment(expr: Expression): Expression =
-    add(expr, number(1))
+    add(expr, number(Complex.one))
 
   protected def add(left: Expression, right: Expression): Expression =
     FunctionCall(SpecialNames.add, List(left, right))
@@ -67,7 +68,7 @@ trait SyntaxTreeGenerator {
   protected def div(left: Expression, right: Expression): Expression =
     FunctionCall(SpecialNames.div, List(left, right))
 
-  protected def number(value: Double): Expression = Static(NumberValue(value))
+  protected def number(value: Complex): Expression = Static(NumberValue(value))
 
   protected def point(first: Expression, second: Expression): Expression =
     FunctionCall(SpecialNames.point, List(first, second))

@@ -1,11 +1,13 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
+import com.github.scytrowski.sturtle.tpl.types.Complex
+
 abstract class Token
 
 object Token {
   final case class NameToken(value: String) extends Token
   final case class BooleanToken(value: Boolean) extends Token
-  final case class NumberToken(value: Double) extends Token
+  final case class NumberToken(value: Complex) extends Token
   final case class StringToken(value: String) extends Token
   case object Block extends Token
   case object Function extends Token

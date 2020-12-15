@@ -4,6 +4,7 @@ import cats.effect.IO
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture}
 import com.github.scytrowski.sturtle.tpl.lexer.LexerError.{InvalidInteger, InvalidSymbol, UnclosedString}
 import com.github.scytrowski.sturtle.tpl.parser.Token
+import com.github.scytrowski.sturtle.tpl.types.Complex
 import fs2.Stream
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatest.{Inside, OptionValues, TryValues}
@@ -143,39 +144,63 @@ class TPLLexerTest extends EffectSpecLike with RandomnessFixture with TryValues 
     }
 
     "emit NameToken" in {
-      forAll(Table("n", randomNames(1000):_*)) { n =>
-        requireTokenized(n) { case NameToken(v) :: Nil if v == n => }
+      forAll(Table("n", randomElements[NameToken](1000):_*)) { t =>
+        requireTokenized(t.value) { case (t2: NameToken) :: Nil if t == t2 => }
       }
     }
 
     "emit StringToken" in {
-      forAll(Table("s", randomStrings(1000):_*)) { s =>
+      forAll(Table("s", randomElements[String](1000):_*)) { s =>
         requireTokenized(List("\"", s, "\"").mkString) { case StringToken(v) :: Nil if v == s => }
       }
     }
 
     "emit NumberToken" when {
       "number is an integer" in {
-        forAll(Table("n", randomInts(1000):_*)) { n =>
+        forAll(Table("n", randomElements[Int](1000):_*)) { n =>
           requireTokenized(n.toString) { case NumberToken(v) :: Nil if v == n => }
         }
       }
 
       "number has fractional digits" in {
-        forAll(Table("q", randomDoubles(1000):_*)) { q =>
+        forAll(Table("q", randomElements[Double](1000, _ >= 0):_*)) { q =>
           requireTokenized(q.toString) { case NumberToken(v) :: Nil if v == q => }
         }
       }
 
       "number has preceding plus" in {
-        forAll(Table("q", randomInts(1000):_*)) { q =>
+        forAll(Table("q", randomElements[Int](1000):_*)) { q =>
           requireTokenized(s"+$q") { case Plus :: NumberToken(v) :: Nil if v == q => }
         }
       }
 
       "number has preceding minus" in {
-        forAll(Table("q", randomInts(1000):_*)) { q =>
+        forAll(Table("q", randomElements[Int](1000):_*)) { q =>
           requireTokenized(s"-$q") { case Minus :: NumberToken(v) :: Nil if v == q => }
+        }
+      }
+
+      "number is imaginary" in {
+        forAll(Table("q", randomElements[Double](1000, _ >= 0):_*)) { q =>
+          requireTokenized(s"${q}i") { case NumberToken(v) :: Nil if v == Complex.imaginary(q) => }
+        }
+      }
+
+      "number is complex" in {
+        forAll(Table(("re", "im"), randomPairs[Double](1000, _ >= 0):_*)) { case (re, im) =>
+          requireTokenized(s"$re+${im}i") { case NumberToken(r) :: Plus :: NumberToken(i) :: Nil =>
+            r mustBe Complex.real(re)
+            i mustBe Complex.imaginary(im)
+          }
+        }
+      }
+
+      "number is conjugate of complex number" in {
+        forAll(Table(("re", "im"), randomPairs[Double](1000, _ >= 0):_*)) { case (re, im) =>
+          requireTokenized(s"$re-${im}i") { case NumberToken(r) :: Minus :: NumberToken(i) :: Nil =>
+            r mustBe Complex.real(re)
+            i mustBe Complex.imaginary(im)
+          }
         }
       }
     }
@@ -249,13 +274,13 @@ class TPLLexerTest extends EffectSpecLike with RandomnessFixture with TryValues 
         If,
         NameToken("n"),
         EqualsSign,
-        NumberToken(5),
+        NumberToken(Complex.real(5)),
         Then,
         Break,
         End,
         EOL
       )
-      requireTokenized(source) { case If :: NameToken("n") :: EqualsSign :: NumberToken(5) :: Then :: Break :: End :: Nil => }
+      requireTokenized(source) { case If :: NameToken("n") :: EqualsSign :: NumberToken(Complex(5, 0)) :: Then :: Break :: End :: Nil => }
     }
 
     "skip initial whitespaces" in {
