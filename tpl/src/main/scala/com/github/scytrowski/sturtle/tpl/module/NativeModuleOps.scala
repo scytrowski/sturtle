@@ -2,17 +2,19 @@ package com.github.scytrowski.sturtle.tpl.module
 
 import cats.MonadError
 import cats.syntax.applicative._
-import cats.syntax.functor._
 import cats.syntax.flatMap._
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.RealNumberExpected
-import com.github.scytrowski.sturtle.tpl.interpreter.{InterpreterError, InterpreterException, LogicalValue, NumericValue, PList, Value}
-import com.github.scytrowski.sturtle.tpl.types.Complex
-import shapeless.Nat
-import shapeless.Nat.{_0, _1, _2}
+import cats.syntax.functor._
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{InvalidValue, RealNumberExpected}
+import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.types.Nat.{_0, _1, _2}
+import com.github.scytrowski.sturtle.tpl.types.NatOps.Diff
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat, SizedList, Succ}
+
+import scala.reflect.ClassTag
 
 abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
   protected type FuncF[N <: Nat] = ParamsList[N] => F[Value]
-  protected type ParamsList[N <: Nat] = PList.Aux[N]
+  protected type ParamsList[N <: Nat] = SizedList.Aux[Value, N]
 
   protected def unaryLogicalFunction(f: Boolean => Value): FuncF[_1] = params =>
     wrap {
@@ -65,4 +67,15 @@ abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
 
   protected def raiseError(error: InterpreterError): F[Nothing] =
     MonadError[F, Throwable].raiseError(InterpreterException(error))
+
+  protected implicit class RequireSizedListElement[N <: Nat](list: SizedList.Aux[Value, N]) {
+    def require[R <: Value](index: Nat)
+                           (implicit diff: Diff[N, Succ[index.N]], reprTag: ClassTag[R]): Either[InterpreterError, R] =
+      list.at(index) match {
+        case r: R    => Right(r)
+        case invalid => Left(InvalidValue(invalid))
+      }
+  }
+
+
 }

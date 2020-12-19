@@ -9,7 +9,8 @@ import com.github.scytrowski.sturtle.core.TurtleQueryAnswer.{AngleAnswer, FillCo
 import com.github.scytrowski.sturtle.core._
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.InvalidAnswer
 import com.github.scytrowski.sturtle.tpl.interpreter._
-import shapeless.Nat._0
+import com.github.scytrowski.sturtle.tpl.types.Nat._0
+import com.github.scytrowski.sturtle.tpl.types._0
 
 import scala.reflect.ClassTag
 

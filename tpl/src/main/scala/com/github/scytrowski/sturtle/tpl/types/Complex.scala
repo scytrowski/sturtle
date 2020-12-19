@@ -77,6 +77,16 @@ final case class Complex(real: Double, imaginary: Double) {
   def conjugate: Complex = Complex(real, -imaginary)
 
   def abs: Double = Math.sqrt(real * real + imaginary * imaginary)
+
+  override def toString: String =
+    isReal -> isImaginary match {
+      case (false, false) => s"$real${if (imaginary < 0) "-" else "+"}${Math.abs(imaginary)}i"
+      case (false, _)     => s"${imaginary}i"
+      case (_, false)     => s"$real"
+      case (true, true)   => "0"
+    }
+
+
 }
 
 object Complex {

@@ -1,7 +1,7 @@
 package com.github.scytrowski.sturtle.tpl.module
 
 import com.github.scytrowski.sturtle.tpl.interpreter.FunctionSignature
-import shapeless.Nat.{_0, _1}
+import com.github.scytrowski.sturtle.tpl.types.Nat._
 
 object TurtleFunctions {
   val goto = FunctionSignature("goto", _1)

@@ -12,9 +12,8 @@ import com.github.scytrowski.sturtle.core.{TurtleCommand, TurtleController, Turt
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.RealNumberExpected
 import com.github.scytrowski.sturtle.tpl.interpreter._
-import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.Inside
-import shapeless.Nat
 
 class TurtleFunctionsModuleTest extends EffectSpecLike with RandomnessFixture with TableFixture with Inside {
   "TurtleFunctionsModule" when {

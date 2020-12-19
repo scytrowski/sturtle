@@ -7,10 +7,9 @@ import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{DivisionByZero, RealNumberExpected}
 import com.github.scytrowski.sturtle.tpl.interpreter._
-import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.Inside
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import shapeless.Nat
 
 class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture with TableFixture with Inside {
   "SpecialFunctionsModule" when {

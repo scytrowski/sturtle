@@ -4,26 +4,27 @@ import cats.Id
 import cats.effect.IO
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
-import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.{Inside, OptionValues}
-import shapeless.Nat.{_0, _3, _6}
 
 class ScopeTest extends CommonSpecLike with Inside with OptionValues {
+  import Nat._
+
   "Scope" should {
     "putObject" when {
       "object is variable" in {
         val variable = RuntimeVariable(VariableSignature("a"), StringValue("1337"))
 
-        requireLayeredScope(Scope.root.putObject(variable)).objects mustBe Map(variable.signature -> variable)
+        requireLayeredScope(Scope.root("abc").putObject(variable)).objects mustBe Map(variable.signature -> variable)
       }
 
       "object is function" in {
-        val function = RuntimeFunction.Stored(
+        val function = RuntimeFunction.Stored[Id](
           FunctionSignature("f", _3),
           TPLCode.empty.withExit(PushValue(VoidValue))
         )
 
-        requireLayeredScope(Scope.root.putObject(function)).objects mustBe Map(function.signature -> function)
+        requireLayeredScope(Scope.root("abc").putObject(function)).objects mustBe Map(function.signature -> function)
       }
     }
 
@@ -31,7 +32,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       "signature points to variable" in {
         val variable = RuntimeVariable(VariableSignature("b"), NumberValue(Complex.real(1337)))
         val scope = LayeredScope(
-          ScopeType.Regular,
+          ScopeType.Regular("abc"),
           Map(variable.signature -> variable),
           None
         )
@@ -40,12 +41,12 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       }
 
       "signature points to function" in {
-        val function = RuntimeFunction.Stored(
+        val function = RuntimeFunction.Stored[Id](
           FunctionSignature("g", _6),
           TPLCode.empty.withExit(PushValue(VoidValue))
         )
         val scope = LayeredScope(
-          ScopeType.Regular,
+          ScopeType.Regular("abc"),
           Map(function.signature -> function),
           None
         )
@@ -60,10 +61,10 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
         val funcSignature = FunctionSignature("f", _0)
         val expectedValue = StringValue("expected value")
         val expectedFunction = RuntimeFunction[IO](funcSignature).const(StringValue("expectedFunction"))
-        val scope1 = Scope.root
+        val scope1 = Scope.root("abc")
           .putObject(RuntimeVariable(varSignature, StringValue("unexpected value")))
           .putObject(RuntimeFunction[IO](funcSignature).const(StringValue("unexpectedFunction")))
-        val scope2 = Scope.root
+        val scope2 = Scope.root("def")
           .putObject(RuntimeVariable(varSignature, expectedValue))
           .putObject(expectedFunction)
 
@@ -71,24 +72,26 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
 
         val actualValue = merged.getVariable(varSignature).value
         val actualFunction = merged.getFunction(funcSignature).value
+
+        merged.scopeType mustBe scope2.scopeType
         actualValue mustBe RuntimeVariable(varSignature, expectedValue)
         actualFunction mustBe expectedFunction
       }
     }
 
     "withinFunction" in {
-      Scope.root.withinFunction.scopeType mustBe ScopeType.WithinFunction
+      Scope.root("123").withinFunction("abc").scopeType mustBe ScopeType.WithinFunction("abc")
     }
 
     "withinLoop" in {
-      Scope.root.withinLoop.scopeType mustBe ScopeType.WithinLoop
+      Scope.root("123").withinLoop("def").scopeType mustBe ScopeType.WithinLoop("def")
     }
 
     "parent" when {
       "fallback scope is defined" in {
-        val parent = Scope.root[Id]
+        val parent = Scope.root[Id]("def")
         val child = LayeredScope(
-          ScopeType.WithinFunction,
+          ScopeType.WithinFunction("abc"),
           Map.empty,
           Some(parent)
         )
@@ -98,7 +101,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
 
       "otherwise" in {
         val altRoot = LayeredScope(
-          ScopeType.WithinLoop,
+          ScopeType.WithinLoop("def"),
           Map.empty,
           None
         )
@@ -110,7 +113,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
     "onTop" in {
       val someVariable = RuntimeVariable(VariableSignature("c"), BooleanValue(false))
       val scope = LayeredScope[Id](
-        ScopeType.WithinFunction,
+        ScopeType.WithinFunction("abc"),
         Map(someVariable.signature -> someVariable),
         None
       )

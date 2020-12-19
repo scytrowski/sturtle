@@ -18,14 +18,15 @@ trait Scope[F[_]] {
   def putObject(obj: RuntimeObject[F]): Self
   def getObject(signature: Signature): Option[RuntimeObject[F]]
 
-  def withinFunction: Self
-  def withinLoop: Self
+  final def withinFunction(id: String): Self = withType(ScopeType.WithinFunction(id))
+  final def withinLoop(id: String): Self = withType(ScopeType.WithinLoop(id))
+  def withType(newType: ScopeType): Self
 
   def parent: Scope[F]
 }
 
 object Scope {
-  def root[F[_]]: Scope[F] = LayeredScope(ScopeType.Regular, Map.empty, None)
+  def root[F[_]](id: String): Scope[F] = LayeredScope(ScopeType.Regular(id), Map.empty, None)
 }
 
 final case class LayeredScope[F[_]] private(scopeType: ScopeType,
@@ -39,9 +40,7 @@ final case class LayeredScope[F[_]] private(scopeType: ScopeType,
   override def getObject(signature: Signature): Option[RuntimeObject[F]] =
     objects.get(signature).orElse(fallbackScope.flatMap(_.getObject(signature)))
 
-  override def withinFunction: LayeredScope[F] = copy(scopeType = ScopeType.WithinFunction)
-
-  override def withinLoop: LayeredScope[F] = copy(scopeType = ScopeType.WithinLoop)
+  override def withType(newType: ScopeType): LayeredScope[F] = copy(scopeType = newType)
 
   override val parent: Scope[F] = fallbackScope.getOrElse(this)
 }
@@ -58,18 +57,7 @@ final case class MergedScope[F[_]](inner: Scope[F], outer: Scope[F]) extends Sco
       .getObject(signature)
       .orElse(inner.getObject(signature))
 
-  override def withinFunction: MergedScope[F] = copy(outer = outer.withinFunction)
-
-  override def withinLoop: MergedScope[F] = copy(outer = outer.withinLoop)
+  override def withType(newType: ScopeType): MergedScope[F] = copy(outer = outer.withType(newType))
 
   override val parent: Scope[F] = inner
-}
-
-
-sealed abstract class ScopeType
-
-object ScopeType {
-  case object Regular extends ScopeType
-  case object WithinFunction extends ScopeType
-  case object WithinLoop extends ScopeType
 }

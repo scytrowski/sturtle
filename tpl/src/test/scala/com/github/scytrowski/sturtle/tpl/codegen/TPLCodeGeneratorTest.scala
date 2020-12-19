@@ -5,11 +5,12 @@ import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Block, Expression}
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
 import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, FunctionSignature, NumberValue, StringValue, TPLCode, TPLInstruction, VariableSignature, VoidValue}
-import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.Inside
-import shapeless.Nat._3
 
 class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
+  import Nat._
+
   "TPLCodeGenerator" should {
     "generate TPL instructions" when {
       "node is Block" in {

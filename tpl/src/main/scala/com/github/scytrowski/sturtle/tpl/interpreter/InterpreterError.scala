@@ -10,8 +10,8 @@ object InterpreterError {
   final case class InvalidValue(value: Value) extends InterpreterError
   final case class InvalidAnswer(query: TurtleQuery, answer: TurtleQueryAnswer) extends InterpreterError
   case object EmptyStack extends InterpreterError
-  case object NotInFunction extends InterpreterError
-  case object NotInLoop extends InterpreterError
+  final case class NotInFunction(actualScopeType: ScopeType) extends InterpreterError
+  final case class NotInLoop(actualScopeType: ScopeType) extends InterpreterError
   case object DivisionByZero extends InterpreterError
   case object RealNumberExpected extends InterpreterError
 }

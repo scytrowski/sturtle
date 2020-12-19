@@ -5,8 +5,8 @@ import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.{Branch, BranchCase, DefineFunction, ExitFunction, ExitLoop, Invoke, Loop, PopTo, PushFrom, PushValue}
 import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.Nat.{_1, _3}
 import org.scalatest.{Inside, OptionValues}
-import shapeless.Nat.{_1, _3}
 
 import scala.util.{Failure, Success, Try}
 
@@ -116,28 +116,28 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       val signature = FunctionSignature("f", _3)
       val body = TPLCode.empty.withExit(PushValue(StringValue("abc")))
 
-      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction.Stored(signature, body)
+      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction.Stored[Try](signature, body)
     }
 
     "interpret ExitLoop" in {
-      val scope = Scope.root[Try].onTop.withinLoop
+      val scope = Scope.root[Try]("123").onTop.withinLoop("abc")
       val ctx = InterpreterContext
         .initial[Try]
-        .copy(scope = scope)
+        .copy(scopeId = "abc", scope = scope)
 
-      expectSuccess(ctx)(ExitLoop).scope.scopeType mustBe ScopeType.Regular
+      expectSuccess(ctx)(ExitLoop).scope.scopeType mustBe ScopeType.WithinLoop("abc")
     }
 
     "interpret ExitFunction" in {
-      val scope = Scope.root[Try].onTop.withinFunction
+      val scope = Scope.root[Try]("123").onTop.withinFunction("def")
       val returnValue = StringValue("1337")
       val ctx = InterpreterContext
         .initial[Try]
-        .copy(scope = scope)
+        .copy(scopeId = "def", scope = scope)
 
       val updatedCtx = expectSuccess(ctx)(ExitFunction(PushValue(returnValue)))
 
-      updatedCtx.scope.scopeType mustBe ScopeType.Regular
+      updatedCtx.scope.scopeType mustBe ScopeType.Regular("123")
       updatedCtx.stack.pop.map(_._1).value mustBe returnValue
     }
 
@@ -159,11 +159,11 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       }
 
       "not in function" in {
-        expectFailure()(ExitFunction(PushValue(BooleanValue(false)))) mustBe NotInFunction
+        expectFailure()(ExitFunction(PushValue(BooleanValue(false)))) mustBe a[NotInFunction]
       }
 
       "not in loop" in {
-        expectFailure()(ExitLoop) mustBe NotInLoop
+        expectFailure()(ExitLoop) mustBe a[NotInLoop]
       }
     }
   }

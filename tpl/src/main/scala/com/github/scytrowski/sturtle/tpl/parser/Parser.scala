@@ -2,53 +2,56 @@ package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.{Monad, ~>}
 
-trait Parser[T, +A] {
-  def parse: Parse[T, A]
+trait Parser[T, +E, +A] {
+  def parse: Parse[T, E, A]
 
-  final def as[B](b: B): Parser[T, B] = map(_ => b)
+  final def as[B](b: B): Parser[T, E, B] = map(_ => b)
 
-  final def map[B](f: A => B): Parser[T, B] = Parser(parse(_).map(f))
+  final def map[B](f: A => B): Parser[T, E, B] = Parser(parse(_).map(f))
 
-  final def *>[B](pb: Parser[T, B]): Parser[T, B] = andThen(pb)
+  final def *>[E2 >: E, B](pb: Parser[T, E2, B]): Parser[T, E2, B] = andThen(pb)
 
-  final def andThen[B](pb: Parser[T, B]): Parser[T, B] = flatMap(_ => pb)
+  final def andThen[E2 >: E, B](pb: Parser[T, E2, B]): Parser[T, E2, B] = flatMap(_ => pb)
 
-  final def flatMap[B](f: A => Parser[T, B]): Parser[T, B] =
+  final def flatMap[E2 >: E, B](f: A => Parser[T, E2, B]): Parser[T, E2, B] =
     Parser {
       parse(_).flatParseMap { case (a, remaining) => f(a).parse(remaining) }
     }
 
-  final def option: Parser[T, Option[A]] = map(Option(_))
+  final def option: Parser[T, E, Option[A]] = map(Option(_))
 
-  final def left[B]: Parser[T, Either[A, B]] = map(Left(_))
+  final def left[B]: Parser[T, E, Either[A, B]] = map(Left(_))
 
-  final def right[B]: Parser[T, Either[B, A]] = map(Right(_))
+  final def right[B]: Parser[T, E, Either[B, A]] = map(Right(_))
 }
 
 object Parser {
-  def apply[T, A](implicit parser: Parser[T, A]): Parser[T, A] = parser
+  def apply[T, E, A](implicit parser: Parser[T, E, A]): Parser[T, E, A] = parser
 
-  def apply[T, A](parseF: Parse[T, A]): Parser[T, A] =
-    new Parser[T, A] {
-      override val parse: Parse[T, A] = parseF
+  def apply[T, E, A](parseF: Parse[T, E, A]): Parser[T, E, A] =
+    new Parser[T, E, A] {
+      override val parse: Parse[T, E, A] = parseF
     }
 
-  def fromParse[T]: Parse[T, *] ~> Parser[T, *] =
-    new (Parse[T, *] ~> Parser[T, *]) {
-      override def apply[A](fa: Parse[T, A]): Parser[T, A] =
+  def proxy[T, E, A](f: List[T] => Parser[T, E, A]): Parser[T, E, A] =
+    Parser[T, E, A]((tokens: List[T]) => f(tokens).parse(tokens))
+
+  def fromParse[T, E]: Parse[T, E, *] ~> Parser[T, E, *] =
+    new (Parse[T, E, *] ~> Parser[T, E, *]) {
+      override def apply[A](fa: Parse[T, E, A]): Parser[T, E, A] =
         Parser(fa)
     }
 
-  implicit def monad[T]: Monad[Parser[T, *]] =
-    new Monad[Parser[T, *]] {
-      override def flatMap[A, B](fa: Parser[T, A])(f: A => Parser[T, B]): Parser[T, B] = fa.flatMap(f)
+  implicit def monad[T, E]: Monad[Parser[T, E, *]] =
+    new Monad[Parser[T, E, *]] {
+      override def flatMap[A, B](fa: Parser[T, E, A])(f: A => Parser[T, E, B]): Parser[T, E, B] = fa.flatMap(f)
 
-      override def tailRecM[A, B](a: A)(f: A => Parser[T, Either[A, B]]): Parser[T, B] =
+      override def tailRecM[A, B](a: A)(f: A => Parser[T, E, Either[A, B]]): Parser[T, E, B] =
         f(a).flatMap {
           case Left(a) => tailRecM(a)(f)
           case Right(b) => pure(b)
         }
 
-      override def pure[A](x: A): Parser[T, A] = Parser(ParseResult.Success(x, _))
+      override def pure[A](x: A): Parser[T, E, A] = Parser(ParseResult.Success(x, _))
     }
 }

@@ -1,22 +1,23 @@
-package com.github.scytrowski.sturtle.tpl.parser
+package com.github.scytrowski.sturtle.tpl.parser.expression
 
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
-import com.github.scytrowski.sturtle.tpl.parser.ParseError.UnexpectedEndOfStream
+import com.github.scytrowski.sturtle.tpl.parser.expression.ExpressionError.UnexpectedEndOfStream
+import com.github.scytrowski.sturtle.tpl.parser.{ParseResult, SyntaxTreeGenerator}
 
 sealed abstract class Operator(val precedence: Int) {
-  def parse: Parse[Expression, Expression]
+  def parse: ParseExpressions[Expression]
 }
 
 object Operator extends SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
   sealed abstract class UnaryOperator(precedence: Int, expF: Expression => Expression) extends Operator(precedence) {
-    override def parse: Parse[Expression, Expression] = {
+    override def parse: ParseExpressions[Expression] = {
       case head :: tail => ParseResult.Success(expF(head), tail)
       case _ => ParseResult.Failure(UnexpectedEndOfStream)
     }
   }
 
   sealed abstract class BinaryOperator(precedence: Int, expF: (Expression, Expression) => Expression) extends Operator(precedence) {
-    final override def parse: Parse[Expression, Expression] = {
+    final override def parse: ParseExpressions[Expression] = {
       case left :: right :: tail => ParseResult.Success(expF(right, left), tail)
       case _ => ParseResult.Failure(UnexpectedEndOfStream)
     }

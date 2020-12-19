@@ -8,6 +8,8 @@ trait Stack[A] {
   def pop: Option[(A, Self)]
 
   final def merge(other: Stack[A]): Stack[A] = MergedStack(this, other)
+
+  final def asLazyList: LazyList[A] = LazyList.unfold(this)(_.pop)
 }
 
 object Stack {

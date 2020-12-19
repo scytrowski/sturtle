@@ -3,12 +3,14 @@ package com.github.scytrowski.sturtle.tpl.interpreter
 import cats.Id
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{EmptyStack, FunctionNotFound, NotInFunction, NotInLoop, VariableNotFound}
+import com.github.scytrowski.sturtle.tpl.interpreter.ScopeType.Regular
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction.PushValue
-import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.{Inside, OptionValues}
-import shapeless.Nat.{_2, _4, _5}
 
 class InterpreterContextTest extends CommonSpecLike with Inside with OptionValues {
+  import Nat._
+
   "InterpreterContext" when {
     "getVariable" should {
       "succeed" in {
@@ -16,7 +18,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
         val value = NumberValue(Complex.real(1234))
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root.putObject(RuntimeVariable(signature, value)))
+          .copy(scope = Scope.root("abc").putObject(RuntimeVariable(signature, value)))
 
         expectSuccess(ctx.getVariable(signature)) mustBe RuntimeVariable(signature, value)
       }
@@ -34,9 +36,9 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
         val body = TPLCode.empty.withExit(PushValue(BooleanValue(true)))
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root.putObject(RuntimeFunction.Stored(signature, body)))
+          .copy(scope = Scope.root("abc").putObject(RuntimeFunction.Stored[Id](signature, body)))
 
-        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction.Stored(signature, body)
+        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction.Stored[Id](signature, body)
       }
 
       "fail" in {
@@ -64,9 +66,9 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
 
         val ctx = InterpreterContext
           .initial
-          .putObject(RuntimeFunction.Stored(signature, body))
+          .putObject(RuntimeFunction.Stored[Id](signature, body))
 
-        ctx.scope.getObject(signature).value mustBe RuntimeFunction.Stored(signature, body)
+        ctx.scope.getObject(signature).value mustBe RuntimeFunction.Stored[Id](signature, body)
       }
     }
 
@@ -134,7 +136,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
           .initial
           .enterFunction
 
-        ctx.scope.scopeType mustBe ScopeType.WithinFunction
+        ctx.scope.scopeType mustBe ScopeType.WithinFunction(ctx.scopeId)
       }
     }
 
@@ -144,7 +146,7 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
           .initial
           .enterLoop
 
-        ctx.scope.scopeType mustBe ScopeType.WithinLoop
+        ctx.scope.scopeType mustBe ScopeType.WithinLoop(ctx.scopeId)
       }
     }
 
@@ -152,13 +154,17 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
       "succeed" in {
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root.onTop.withinFunction)
+          .copy(scopeId = "123", scope = Scope.root("abc").onTop.withinFunction("123"))
 
-        expectSuccess(ctx.exitFunction).scope.scopeType mustBe ScopeType.Regular
+        expectSuccess(ctx.exitFunction).scope.scopeType mustBe ScopeType.Regular("abc")
       }
 
       "fail" in {
-        expectFailure(InterpreterContext.initial.exitFunction) mustBe NotInFunction
+        val ctx = InterpreterContext
+          .initial
+          .copy(scopeId = "123", scope = Scope.root("abc").onTop.withType(Regular("123")))
+
+        expectFailure(ctx.exitFunction) mustBe NotInFunction(Regular("123"))
       }
     }
 
@@ -166,13 +172,17 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
       "succeed" in {
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root.onTop.withinLoop)
+          .copy(scopeId = "456", scope = Scope.root("abc").onTop.withinLoop("456"))
 
-        expectSuccess(ctx.exitLoop).scope.scopeType mustBe ScopeType.Regular
+        expectSuccess(ctx.exitLoop).scope.scopeType mustBe ScopeType.WithinLoop("456")
       }
 
       "fail" in {
-        expectFailure(InterpreterContext.initial.exitLoop) mustBe NotInLoop
+        val ctx = InterpreterContext
+          .initial
+          .copy(scopeId = "456", scope = Scope.root("abc").onTop.withType(Regular("456")))
+
+        expectFailure(ctx.exitLoop) mustBe NotInLoop(Regular("456"))
       }
     }
   }

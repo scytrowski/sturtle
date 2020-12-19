@@ -1,13 +1,13 @@
 package com.github.scytrowski.sturtle.tpl.module
 
 import com.github.scytrowski.sturtle.tpl.interpreter.FunctionSignature
-import shapeless.nat._
+import com.github.scytrowski.sturtle.tpl.types.Nat._
 
 object SpecialFunctions {
   val equal = FunctionSignature("_eq", _2)
   val notEqual = FunctionSignature("_neq", _2)
   val less = FunctionSignature("_le", _2)
-  val lessOrEqual = FunctionSignature("leq", _2)
+  val lessOrEqual = FunctionSignature("_leq", _2)
   val greater = FunctionSignature("_gre", _2)
   val greaterOrEqual = FunctionSignature("_greq", _2)
   val negate = FunctionSignature("_neg", _1)

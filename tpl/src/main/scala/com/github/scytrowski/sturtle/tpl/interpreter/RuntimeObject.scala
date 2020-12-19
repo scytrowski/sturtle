@@ -5,8 +5,7 @@ import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.{ApplicativeError, MonadError}
-import shapeless._
-import shapeless.ops.nat.ToInt
+import com.github.scytrowski.sturtle.tpl.types.{Nat, SizedList}
 
 sealed abstract class RuntimeObject[+F[_]] {
   type S <: Signature
@@ -25,17 +24,17 @@ sealed abstract class RuntimeFunction[F[_]] extends RuntimeObject[F] {
 }
 
 object RuntimeFunction {
-  def apply[F[_]: MonadError[*[_], Throwable]](signature: FunctionSignature)(implicit toInt: ToInt[signature.ParamsN]) = new RuntimeFunctionFactory[F, signature.ParamsN](signature)
+  def apply[F[_]: MonadError[*[_], Throwable]](signature: FunctionSignature) = new RuntimeFunctionFactory[F, signature.ParamsN](signature)
 
-  final class RuntimeFunctionFactory[F[_]: MonadError[*[_], Throwable], PN <: Nat : ToInt](val sign: FunctionSignature.Aux[PN]) {
+  final class RuntimeFunctionFactory[F[_]: MonadError[*[_], Throwable], PN <: Nat](val sign: FunctionSignature.Aux[PN]) {
     val void: RuntimeFunction[F] = const(VoidValue)
 
     def const(value: Value): RuntimeFunction[F] = pure(_ => value)
 
-    def pure(f: PList.Aux[PN] => Value): RuntimeFunction[F] = native(f.andThen(_.pure))
+    def pure(f: SizedList.Aux[Value, PN] => Value): RuntimeFunction[F] = native(f.andThen(_.pure))
 
-    def native(f: PList.Aux[PN] => F[Value]): RuntimeFunction[F] =
-      new Native[F, PN] {
+    def native(f: SizedList.Aux[Value, PN] => F[Value]): RuntimeFunction[F] =
+      new Native[F, PN](sign.paramsN) {
         override val signature: FunctionSignature = sign
 
         override protected def invokeN(params: ParamsList): F[Value] = f(params)
@@ -47,8 +46,8 @@ object RuntimeFunction {
       interpreter.interpret(code, ctx)
   }
 
-  sealed abstract class Native[F[_]: MonadError[*[_], Throwable], PN <: Nat : ToInt] extends RuntimeFunction[F] {
-    final type ParamsList = PList.Aux[PN]
+  sealed abstract class Native[F[_]: MonadError[*[_], Throwable], PN <: Nat](paramsN: PN) extends RuntimeFunction[F] {
+    final type ParamsList = SizedList.Aux[Value, PN]
 
     protected def invokeN(params: ParamsList): F[Value]
 
@@ -67,10 +66,10 @@ object RuntimeFunction {
             popParamsRec(updatedCtx, param :: params, remaining - 1)
           }
         else
-          Right(PList.wrap[PN](params) -> ctx)
+          Right(SizedList.wrap[Value, PN](params) -> ctx)
 
       ApplicativeError[F, Throwable].fromEither {
-        popParamsRec(ctx, List.empty, Nat.toInt[PN]).leftMap(InterpreterException)
+        popParamsRec(ctx, List.empty, paramsN.value).leftMap(InterpreterException)
       }
     }
   }

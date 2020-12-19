@@ -8,7 +8,7 @@ import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.DivisionByZero
 import com.github.scytrowski.sturtle.tpl.interpreter._
-import shapeless.nat._
+import com.github.scytrowski.sturtle.tpl.types.Nat.{_0, _1, _2}
 
 final class SpecialFunctionsModule[F[+_]: MonadError[*[_], Throwable]] extends NativeModuleOps[F] {
   def apply(): Module[F] =

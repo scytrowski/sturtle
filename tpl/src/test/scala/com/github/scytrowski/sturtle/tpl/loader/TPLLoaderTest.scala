@@ -5,9 +5,9 @@ import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter._
 import com.github.scytrowski.sturtle.tpl.module.Module
 import com.github.scytrowski.sturtle.tpl.types.Complex
+import com.github.scytrowski.sturtle.tpl.types.Nat._5
 import org.scalatest.OptionValues
 import org.scalatest.prop.TableDrivenPropertyChecks
-import shapeless.Nat._5
 
 class TPLLoaderTest extends EffectSpecLike with TableDrivenPropertyChecks with OptionValues {
   "TPLLoader" when {

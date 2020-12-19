@@ -1,13 +1,14 @@
-package com.github.scytrowski.sturtle.tpl.parser
+package com.github.scytrowski.sturtle.tpl.parser.expression
 
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.Name
 import com.github.scytrowski.sturtle.tpl.fixture.CommonSpecLike
-import com.github.scytrowski.sturtle.tpl.parser.ExpressionToken.{OperatorToken, ValueToken}
+import com.github.scytrowski.sturtle.tpl.parser.expression.ExpressionToken.{OperatorToken, ValueToken}
+import com.github.scytrowski.sturtle.tpl.parser.{ParseResult, SyntaxTreeGenerator}
 import org.scalatest.Inside
 
-class ExpressionParserTest extends CommonSpecLike with SyntaxTreeGenerator with Inside { gen: SyntaxTreeGenerator =>
-  "ExpressionParser" should {
+class ExpressionTokenParserTest extends CommonSpecLike with SyntaxTreeGenerator with Inside { gen: SyntaxTreeGenerator =>
+  "ExpressionTokenParser" should {
     "parse equal" in {
       val tokens = List(
         ValueToken(Name("a")),
@@ -157,8 +158,9 @@ class ExpressionParserTest extends CommonSpecLike with SyntaxTreeGenerator with 
   }
 
   private def parse(tokens: List[ExpressionToken]): Expression =
-    inside(ExpressionParser.parse(tokens)) { case ParseResult.Success(expr, remaining) =>
+    inside(ExpressionTokenParser.parse(tokens)) { case ParseResult.Success(expr, remaining) =>
       remaining.isEmpty mustBe true
       expr
     }
 }
+

@@ -1,18 +1,18 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.data.NonEmptyList
-import cats.syntax.traverse._
 import cats.instances.list._
+import cats.syntax.traverse._
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
-import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.VoidValue
 import com.github.scytrowski.sturtle.tpl.parser.ParseError._
 
-object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
+object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
   import SyntaxTree._
 
-  override def parse: Parse[Token, SyntaxTree] = mainBlock.parse
+  override def parse: Parse[Token, ParseError, SyntaxTree] = mainBlock.parse
 
   private def mainBlock: P[Block] =
     for {
@@ -81,7 +81,7 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
     for {
       _     <- require(Token.If)
       cs    <- cases
-      csNel <- nel(EmptyBranch)(cs.toList)
+      csNel <- nel(EmptyBranch)(cs)
     } yield Branch(csNel)
   }
 
@@ -118,8 +118,6 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
       case unexpected => fail(UnexpectedToken(unexpected))
     }
 
-  private def functionCall(name: Name): P[SyntaxTree] = parameterList(BracketType.Round).map(FunctionCall(name, _))
-
   private def assignment(name: Name): P[SyntaxTree] =
     for {
       _    <- require(Token.Colon, Token.EqualsSign)
@@ -131,102 +129,6 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
       .map(expressionToName)
       .sequence
     )
-
-  private def expression: P[Expression] =
-    expressionBlueprint.flatMap { blueprint =>
-      ExpressionParser.parse(blueprint.allTokens) match {
-        case ParseResult.Success(expr, _) => succeed(expr)
-        case ParseResult.Failure(error) => fail(WrappedError(error))
-      }
-    }
-
-  private def expressionBlueprint: P[ExpressionBlueprint] =
-    expressionElements.map(_.foldLeft(ExpressionBlueprint.empty) {
-      case (blueprint, Left(value)) => blueprint.addValue(value)
-      case (blueprint, Right(operator)) => blueprint.addOperator(operator)
-    })
-
-  private def expressionElements: P[List[Either[Expression, Operator]]] =
-    unfoldWhileDefinedS(true) { allowPrefixOperators =>
-      peekOption.flatMap {
-        case Some(Token.NameToken(name)) => drop(1).as(false -> Left(Name(name))).option
-        case Some(Token.BooleanToken(value)) => drop(1).as(false -> Left(Static(BooleanValue(value)))).option
-        case Some(Token.NumberToken(value)) => drop(1).as(false -> Left(Static(NumberValue(value)))).option
-        case Some(Token.StringToken(value)) => drop(1).as(false -> Left(Static(StringValue(value)))).option
-        case Some(Token.RoundBracketOpen) => roundBracket.map(false -> Left(_)).option
-        case Some(Token.SquareBracketOpen) => squareBracket.map(false -> Left(_)).option
-        case Some(Token.CurlyBracketOpen) => curlyBracket.map(false -> Left(_)).option
-        case Some(Token.EqualsSign) => drop(1).as(true -> Right(Operator.Equal)).option
-        case Some(Token.LessThanSign) => lessOperator.map(true -> Right(_)).option
-        case Some(Token.GreaterThanSign) => greaterOperator.map(true -> Right(_)).option
-        case Some(Token.Not) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Negate)).option
-        case Some(Token.And) => drop(1).as(true -> Right(Operator.And)).option
-        case Some(Token.Or) => drop(1).as(true -> Right(Operator.Or)).option
-        case Some(Token.Plus) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Plus)).option
-        case Some(Token.Plus) => drop(1).as(true -> Right(Operator.Add)).option
-        case Some(Token.Minus) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Minus)).option
-        case Some(Token.Minus) => drop(1).as(true -> Right(Operator.Subtract)).option
-        case Some(Token.Star) => drop(1).as(true -> Right(Operator.Multiply)).option
-        case Some(Token.Slash) => drop(1).as(true -> Right(Operator.Divide)).option
-        case _ => succeed(None)
-      }
-    }
-
-  private def roundBracket: P[Expression] =
-    parameterList(BracketType.Round).flatMap {
-      case expr :: Nil => succeed(expr)
-      case first :: second :: Nil => succeed(gen.point(first, second))
-      case _ => fail(InvalidBracketConstruction(BracketType.Round))
-    }
-
-  private def squareBracket: P[Expression] =
-    parameterList(BracketType.Square).flatMap {
-      case first :: second :: Nil => succeed(gen.vector(first, second))
-      case _ => fail(InvalidBracketConstruction(BracketType.Square))
-    }
-
-  private def curlyBracket: P[Expression] =
-    parameterList(BracketType.Curly).flatMap {
-      case first :: second :: third :: Nil => succeed(gen.color(first, second, third))
-      case _ => fail(InvalidBracketConstruction(BracketType.Curly))
-    }
-
-  private def lessOperator: P[Operator] =
-    require(Token.LessThanSign)
-      .flatMap(_ => peek)
-      .flatMap {
-        case Token.EqualsSign => drop(1).map(_ => Operator.LessOrEqual)
-        case Token.GreaterThanSign => drop(1).map(_ => Operator.NotEqual)
-        case _ => succeed(Operator.Less)
-      }
-
-  private def greaterOperator: P[Operator] =
-    require(Token.GreaterThanSign)
-      .flatMap(_ => peek)
-      .flatMap {
-        case Token.EqualsSign => drop(1).map(_ => Operator.GreaterOrEqual)
-        case _ => succeed(Operator.Greater)
-      }
-
-  private def parameterList(bracketType: BracketType): P[List[Expression]] = {
-    val parameters = unfoldWhileDefinedS(true) {
-      case true =>
-        peek.flatMap {
-          case token if token == bracketType.closeToken => drop(1).as(None)
-          case _ =>
-            expression.flatMap { param =>
-              head.flatMap {
-                case Token.Comma => succeed(true -> param).option
-                case token if token == bracketType.closeToken => succeed(false -> param).option
-                case unexpected => fail(UnexpectedToken(unexpected))
-              }
-            }
-        }
-      case false => succeed(Option.empty[(Boolean, Expression)])
-    }
-
-    require(bracketType.openToken) *> parameters
-  }
 
   private def name: P[Name] =
     head.flatMap {
@@ -240,7 +142,7 @@ object TPLParser extends Parser[Token, SyntaxTree] with ParserFactory[Token] wit
       case _ => fail(InvalidName)
     }
 
-  private def nel[A](error: => ParseError[Token])(elements: List[A]): P[NonEmptyList[A]] =
+  private def nel[A](error: => ParseError)(elements: List[A]): P[NonEmptyList[A]] =
     NonEmptyList.fromList(elements) match {
       case Some(l) => succeed(l)
       case None    => fail(error)
