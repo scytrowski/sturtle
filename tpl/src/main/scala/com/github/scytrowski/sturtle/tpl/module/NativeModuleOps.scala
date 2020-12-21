@@ -4,17 +4,13 @@ import cats.MonadError
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{InvalidValue, RealNumberExpected}
 import com.github.scytrowski.sturtle.tpl.interpreter._
 import com.github.scytrowski.sturtle.tpl.types.Nat.{_0, _1, _2}
-import com.github.scytrowski.sturtle.tpl.types.NatOps.Diff
-import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat, SizedList, Succ}
-
-import scala.reflect.ClassTag
+import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 
 abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
   protected type FuncF[N <: Nat] = ParamsList[N] => F[Value]
-  protected type ParamsList[N <: Nat] = SizedList.Aux[Value, N]
+  protected type ParamsList[N <: Nat] = ParameterList.Aux[N]
 
   protected def unaryLogicalFunction(f: Boolean => Value): FuncF[_1] = params =>
     wrap {
@@ -31,12 +27,26 @@ abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
       } yield f(left.logicalValue, right.logicalValue)
     }
 
-  protected def unaryNumericFunction(f: Complex => Value): FuncF[_1] = params =>
-    wrap {
-      params.require[NumericValue](_0)
-        .map(_.numericValue)
-        .map(f)
-    }
+  protected def unaryRealFunction(f: Double => Value): FuncF[_1] =
+    unaryRealFunctionF(v => wrapEffect(f(v)))
+
+  protected def unaryRealFunctionF(f: Double => F[Value]): FuncF[_1] = params =>
+    for {
+      value <- wrap(params.requireReal(_0))
+      res   <- f(value)
+    } yield res
+
+  protected def unaryNumberFunction(f: Complex => Value): FuncF[_1] =
+    unaryNumberFunctionF(v => wrapEffect(f(v)))
+
+  protected def unaryNumberFunctionF(f: Complex => F[Value]): FuncF[_1] = params =>
+    for {
+      value <- wrap(params.require[NumberValue](_0))
+      res   <- f(value.value)
+    } yield res
+
+  protected def unaryNumericFunction(f: Complex => Value): FuncF[_1] =
+    unaryNumericFunctionF(v => wrapEffect(f(v)))
 
   protected def unaryNumericFunctionF(f: Complex => F[Value]): FuncF[_1] = params =>
     for {
@@ -44,9 +54,28 @@ abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
       res   <- f(value.numericValue)
     } yield res
 
+  protected def binaryRealFunction(f: (Double, Double) => Value): FuncF[_2] =
+    binaryRealFunctionF { case (l, r) => wrapEffect(f(l, r)) }
+
+  protected def binaryRealFunctionF(f: (Double, Double) => F[Value]): FuncF[_2] = params =>
+    for {
+      left  <- wrap(params.requireReal(_0))
+      right <- wrap(params.requireReal(_1))
+      res   <- f(left, right)
+    } yield res
+
+  protected def binaryNumberFunction(f: (Complex, Complex) => Value): FuncF[_2] =
+    binaryNumberFunctionF { case (l, r) => wrapEffect(f(l, r)) }
+
+  protected def binaryNumberFunctionF(f: (Complex, Complex) => F[Value]): FuncF[_2] = params =>
+    for {
+      left  <- wrap(params.require[NumericValue](_0))
+      right <- wrap(params.require[NumericValue](_1))
+      res   <- f(left.numericValue, right.numericValue)
+    } yield res
 
   protected def binaryNumericFunction(f: (Complex, Complex) => Value): FuncF[_2] =
-    binaryNumericFunctionF { case (z, w) => f(z, w).pure }
+    binaryNumericFunctionF { case (z, w) => wrapEffect(f(z, w)) }
 
   protected def binaryNumericFunctionF(f: (Complex, Complex) => F[Value]): FuncF[_2] = params =>
     for {
@@ -55,9 +84,8 @@ abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
       res   <- f(left.numericValue, right.numericValue)
     } yield res
 
-  protected def requireReal(v: Complex): Either[InterpreterError, Double] =
-    v.asReal
-      .toRight(RealNumberExpected)
+  protected def wrapEffect[A](a: => A): F[A] =
+    MonadError[F, Throwable].catchNonFatal(a)
 
   protected def wrap[A](e: Either[InterpreterError, A]): F[A] =
     e match {
@@ -67,15 +95,4 @@ abstract class NativeModuleOps[F[+_]: MonadError[*[_], Throwable]] {
 
   protected def raiseError(error: InterpreterError): F[Nothing] =
     MonadError[F, Throwable].raiseError(InterpreterException(error))
-
-  protected implicit class RequireSizedListElement[N <: Nat](list: SizedList.Aux[Value, N]) {
-    def require[R <: Value](index: Nat)
-                           (implicit diff: Diff[N, Succ[index.N]], reprTag: ClassTag[R]): Either[InterpreterError, R] =
-      list.at(index) match {
-        case r: R    => Right(r)
-        case invalid => Left(InvalidValue(invalid))
-      }
-  }
-
-
 }

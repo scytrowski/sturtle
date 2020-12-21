@@ -19,7 +19,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       }
 
       "object is function" in {
-        val function = RuntimeFunction.Stored[Id](
+        val function = RuntimeFunction.Stored(
           FunctionSignature("f", _3),
           TPLCode.empty.withExit(PushValue(VoidValue))
         )
@@ -41,7 +41,7 @@ class ScopeTest extends CommonSpecLike with Inside with OptionValues {
       }
 
       "signature points to function" in {
-        val function = RuntimeFunction.Stored[Id](
+        val function = RuntimeFunction.Stored(
           FunctionSignature("g", _6),
           TPLCode.empty.withExit(PushValue(VoidValue))
         )

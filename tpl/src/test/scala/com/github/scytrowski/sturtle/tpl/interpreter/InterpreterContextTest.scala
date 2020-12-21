@@ -36,9 +36,9 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
         val body = TPLCode.empty.withExit(PushValue(BooleanValue(true)))
         val ctx = InterpreterContext
           .initial
-          .copy(scope = Scope.root("abc").putObject(RuntimeFunction.Stored[Id](signature, body)))
+          .copy(scope = Scope.root("abc").putObject(RuntimeFunction.Stored(signature, body)))
 
-        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction.Stored[Id](signature, body)
+        expectSuccess(ctx.getFunction(signature)) mustBe RuntimeFunction.Stored(signature, body)
       }
 
       "fail" in {
@@ -66,9 +66,9 @@ class InterpreterContextTest extends CommonSpecLike with Inside with OptionValue
 
         val ctx = InterpreterContext
           .initial
-          .putObject(RuntimeFunction.Stored[Id](signature, body))
+          .putObject(RuntimeFunction.Stored(signature, body))
 
-        ctx.scope.getObject(signature).value mustBe RuntimeFunction.Stored[Id](signature, body)
+        ctx.scope.getObject(signature).value mustBe RuntimeFunction.Stored(signature, body)
       }
     }
 

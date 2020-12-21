@@ -2,8 +2,6 @@ package com.github.scytrowski.sturtle.tpl.module
 
 import cats.MonadError
 import cats.syntax.applicative._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.DivisionByZero
@@ -76,32 +74,24 @@ final class SpecialFunctionsModule[F[+_]: MonadError[*[_], Throwable]] extends N
       .fold[F[NumberValue]](raiseError(DivisionByZero))(_.pure)
   })
 
-  private val point = RuntimeFunction(SpecialFunctions.point).native(binaryNumericFunctionF { case (x, y) =>
-    for {
-      xReal <- wrap(requireReal(x))
-      yReal <- wrap(requireReal(y))
-    } yield PointValue(Point.cartesian(xReal, yReal))
+  private val point = RuntimeFunction(SpecialFunctions.point).native(binaryRealFunction { case (x, y) =>
+    PointValue(Point.cartesian(x, y))
   })
 
-  private val vector = RuntimeFunction(SpecialFunctions.vector).native(binaryNumericFunctionF { case (dx, dy) =>
-    for {
-      dxReal <- wrap(requireReal(dx))
-      dyReal <- wrap(requireReal(dy))
-    } yield VectorValue(Vector.cartesian(dxReal, dyReal))
+  private val vector = RuntimeFunction(SpecialFunctions.vector).native(binaryRealFunction { case (dx, dy) =>
+    VectorValue(Vector.cartesian(dx, dy))
   })
 
-  private val angle = RuntimeFunction(SpecialFunctions.angle).native(unaryNumericFunctionF { v =>
-    wrap(requireReal(v))
-      .map(Angle.radians)
-      .map(AngleValue)
+  private val angle = RuntimeFunction(SpecialFunctions.angle).native(unaryRealFunction { v =>
+    AngleValue(Angle.radians(v))
   })
 
   private val color = RuntimeFunction(SpecialFunctions.color).native { params =>
     wrap {
       for {
-        r <- params.require[NumericValue](_0).flatMap(v => requireReal(v.numericValue))
-        g <- params.require[NumericValue](_1).flatMap(v => requireReal(v.numericValue))
-        b <- params.require[NumericValue](_2).flatMap(v => requireReal(v.numericValue))
+        r <- params.requireReal(_0)
+        g <- params.requireReal(_1)
+        b <- params.requireReal(_2)
       } yield ColorValue(Color.decimal(r, g, b))
     }
   }

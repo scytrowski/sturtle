@@ -316,6 +316,164 @@ class ComplexTest extends CommonSpecLike with TableDrivenPropertyChecks with Ran
       }
     }
 
+    "toPowerOf" when {
+      "other is complex" in {
+        forAll(Table(("c", "z"), randomElements[(Complex, Complex)](1000, { case (c, _) => !c.isZero }):_*)) { case (c, z) =>
+          c.toPowerOf(z) mustBe (c.ln.value * z).exp
+        }
+      }
+
+      "other is double" in {
+        forAll(Table(("c", "z"), randomElements[(Complex, Double)](1000, { case (c, _) => !c.isZero }):_*)) { case (c, z) =>
+          c.toPowerOf(z) mustBe (c.ln.value * z).exp
+        }
+      }
+
+      "self is zero" in {
+        forAll(Table("z", randomElements[Complex](100):_*)) { z =>
+          Complex.zero.toPowerOf(z) mustBe Complex.zero
+        }
+      }
+    }
+
+    "exp" when {
+      "self is complex" in {
+        forAll(Table("z", randomElements[Complex](1000, !_.isReal):_*)) { z =>
+          z.exp mustBe Complex(
+            Math.exp(z.real) * Math.cos(z.imaginary),
+            Math.exp(z.real) * Math.sin(z.imaginary)
+          )
+        }
+      }
+
+      "self is real" in {
+        forAll(Table("v", randomElements[Double](100, v => Math.abs(v) < 100):_*)) { v =>
+          Complex.real(v).exp mustBe Complex.real(Math.exp(v))
+        }
+      }
+    }
+
+    "log" when {
+      "base is valid" in {
+        forAll(Table(("z", "w"), randomElements[(Complex, Complex)](1000, { case (z, w) => !z.isZero && w.isValidLogBase }):_*)) { case (z, w) =>
+          z.log(w).value mustBe (z.ln.value / w.ln.value).value
+        }
+      }
+
+      "number is 0" in {
+        forAll(Table("b", randomElements[Complex](10, _.isValidLogBase):_*)) { b =>
+          Complex.zero.log(b).isEmpty mustBe true
+        }
+      }
+
+      "base is negative real" in {
+        forAll(Table(("z", "b"), randomElements[(Complex, Double)](10, { case (z, b) => !z.isZero && b < 0 }):_*)) { case (z, b) =>
+          z.log(b).isEmpty mustBe true
+        }
+      }
+
+      "base is 0" in {
+        forAll(Table("z", randomElements[Complex](10, !_.isZero):_*)) { z =>
+          z.log(0).isEmpty mustBe true
+        }
+      }
+
+      "base is 1" in {
+        forAll(Table("z", randomElements[Complex](10, !_.isZero):_*)) { z =>
+          z.log(1).isEmpty mustBe true
+        }
+      }
+    }
+
+    "ln" when {
+      "non zero" in {
+        forAll(Table("z", randomElements[Complex](1000, _ != Complex.zero):_*)) { z =>
+          val expectedRe = Math.log(z.abs)
+          val expectedIm = Math.atan2(z.imaginary, z.real)
+
+          z.ln.value mustBe Complex(expectedRe, expectedIm)
+        }
+      }
+
+      "zero" in {
+        Complex.zero.ln.isEmpty mustBe true
+      }
+    }
+
+    "sin" when {
+      "self is complex" in {
+        forAll(Table("z", randomElements[Complex](1000, !_.isReal):_*)) { z =>
+          z.sin mustBe Complex(
+            Math.sin(z.real) * Math.cosh(z.imaginary),
+            Math.cos(z.real) * Math.sinh(z.imaginary)
+          )
+        }
+      }
+
+      "self is real" in {
+        forAll(Table("v", randomElements[Double](1000):_*)) { v =>
+          Complex.real(v).sin mustBe Complex.real(Math.sin(v))
+        }
+      }
+    }
+
+    "cos" when {
+      "self is complex" in {
+        forAll(Table("z", randomElements[Complex](1000, !_.isReal):_*)) { z =>
+          z.cos mustBe Complex(
+            Math.cos(z.real) * Math.cosh(z.imaginary),
+            Math.sin(z.real) * Math.sinh(z.imaginary)
+          )
+        }
+      }
+
+      "self is real" in {
+        forAll(Table("v", randomElements[Double](1000):_*)) { v =>
+          Complex.real(v).cos mustBe Complex.real(Math.cos(v))
+        }
+      }
+    }
+
+    "isValidLogBase" when {
+      "number has imaginary part" in {
+        forAll(Table("z", randomElements[Complex](1000, _.imaginary != 0):_*)) { z =>
+          z.isValidLogBase mustBe true
+        }
+      }
+
+      "number is real" in {
+        forAll(Table("v", randomElements[Double](100, v => v > 0 && v != 1):_*)) { v =>
+          Complex.real(v).isValidLogBase mustBe true
+        }
+      }
+
+      "number is negative real" in {
+        forAll(Table("v", randomElements[Double](10, _ < 0):_*)) { v =>
+          Complex.real(v).isValidLogBase mustBe false
+        }
+      }
+
+      "number is 0" in {
+        Complex.zero.isValidLogBase mustBe false
+      }
+
+      "number is 1" in {
+        Complex.one.isValidLogBase mustBe false
+      }
+    }
+
+    "isZero" when {
+      "number is 0" in {
+        Complex.zero.isZero mustBe true
+      }
+
+      "otherwise" in {
+        forAll(Table("z", randomElements[Complex](1000, _ != Complex.zero):_*)) { z =>
+          z.isZero mustBe false
+        }
+      }
+    }
+
     "conjugate" when {
       "self is complex" in {
         forAll(Table("c", randomElements[Complex](1000):_*)) { c =>
@@ -353,6 +511,12 @@ class ComplexTest extends CommonSpecLike with TableDrivenPropertyChecks with Ran
         forAll(Table("v", randomElements[Double](1000):_*)) { v =>
           Complex.real(v).abs mustBe Math.sqrt(v * v)
         }
+      }
+    }
+
+    "arg" in {
+      forAll(Table("z", randomElements[Complex](1000):_*)) { z =>
+        z.arg mustBe Math.atan2(z.imaginary, z.real)
       }
     }
   }

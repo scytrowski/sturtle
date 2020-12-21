@@ -116,7 +116,7 @@ class TPLInterpreterTest extends EffectSpecLike with Inside with OptionValues {
       val signature = FunctionSignature("f", _3)
       val body = TPLCode.empty.withExit(PushValue(StringValue("abc")))
 
-      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction.Stored[Try](signature, body)
+      expectFunction(signature)(DefineFunction(signature, body)) mustBe RuntimeFunction.Stored(signature, body)
     }
 
     "interpret ExitLoop" in {

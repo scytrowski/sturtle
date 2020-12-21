@@ -9,6 +9,7 @@ import cats.{Monad, MonadError}
 import com.github.scytrowski.sturtle.tpl.interpreter.TPLInstruction._
 import com.github.scytrowski.sturtle.tpl.syntax.foldable._
 import com.github.scytrowski.sturtle.tpl.syntax.monad._
+import com.github.scytrowski.sturtle.tpl.types.Nat
 
 final class TPLInterpreter[F[_]: MonadError[*[_], Throwable]] extends Interpreter[F, TPLCode] {
   override def interpret(code: TPLCode, ctx: InterpreterContext[F]): F[InterpreterContext[F]] = interpretCode(code, ctx)
@@ -31,7 +32,7 @@ final class TPLInterpreter[F[_]: MonadError[*[_], Throwable]] extends Interprete
       case PopTo(to) => wrapResult(ctx.popTo(to))
       case branch: Branch => interpretBranch(branch, ctx)
       case loop: Loop => interpretLoop(loop, ctx)
-      case DefineFunction(signature, body) => ctx.putObject(RuntimeFunction.Stored(signature, body)).pure
+      case DefineFunction(signature, body) => ctx.putObject(RuntimeFunction.Stored[F, signature.ParamsN](signature, body)).pure
       case ExitLoop => wrapResult(ctx.exitLoop)
       case ExitFunction(push) => interpretPush(push, ctx).flatMap(c => wrapResult(c.exitFunction))
     }

@@ -5,11 +5,11 @@ import cats.syntax.either._
 import com.github.scytrowski.sturtle.core.geometry.{Angle, Point, Vector}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{DivisionByZero, RealNumberExpected}
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.{DivisionByZero, IllegalParameter}
 import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.types.Nat._0
 import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.Inside
-import org.scalatest.prop.TableDrivenPropertyChecks._
 
 class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture with TableFixture with Inside {
   "SpecialFunctionsModule" when {
@@ -182,7 +182,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
           val x = NumberValue(Complex.imaginary(v))
           val y = NumberValue(Complex.imaginary(r))
 
-          expectFailure(SpecialFunctions.point, x, y) mustBe RealNumberExpected
+          expectFailure(SpecialFunctions.point, x, y) mustBe IllegalParameter(SpecialFunctions.point, _0, x)
         }
       }
     }
@@ -202,7 +202,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
           val dx = NumberValue(Complex.imaginary(v))
           val dy = NumberValue(Complex.imaginary(r))
 
-          expectFailure(SpecialFunctions.vector, dx, dy) mustBe RealNumberExpected
+          expectFailure(SpecialFunctions.vector, dx, dy) mustBe IllegalParameter(SpecialFunctions.vector, _0, dx)
         }
       }
     }
@@ -220,7 +220,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
         forAll(Table("v", randomElements[Double](100):_*)) { v =>
           val value = NumberValue(Complex.imaginary(v))
 
-          expectFailure(SpecialFunctions.angle, value) mustBe RealNumberExpected
+          expectFailure(SpecialFunctions.angle, value) mustBe IllegalParameter(SpecialFunctions.angle, _0, value)
         }
       }
     }
@@ -242,7 +242,7 @@ class SpecialFunctionsModuleTest extends EffectSpecLike with RandomnessFixture w
           val green = NumberValue(Complex.imaginary(g))
           val blue = NumberValue(Complex.imaginary(b))
 
-          expectFailure(SpecialFunctions.color, red, green, blue) mustBe RealNumberExpected
+          expectFailure(SpecialFunctions.color, red, green, blue) mustBe IllegalParameter(SpecialFunctions.color, _0, red)
         }
       }
     }

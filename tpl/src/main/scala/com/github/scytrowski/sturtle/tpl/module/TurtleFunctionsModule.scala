@@ -43,20 +43,14 @@ final class TurtleFunctionsModule[F[+_]: MonadError[*[_], Throwable]] extends Na
     }
 
   private def forward(controller: TurtleController[F]) =
-    RuntimeFunction(TurtleFunctions.forward).native { params =>
-      for {
-        radius <- wrap(params.require[NumericValue](_0).flatMap(v => requireReal(v.numericValue)))
-        _      <- controller.run(TurtleCommand.MoveForward(radius))
-      } yield VoidValue
-    }
+    RuntimeFunction(TurtleFunctions.forward).native(unaryRealFunctionF { radius =>
+      controller.run(TurtleCommand.MoveForward(radius)).as(VoidValue)
+    })
 
   private def backward(controller: TurtleController[F]) =
-    RuntimeFunction(TurtleFunctions.backward).native { params =>
-      for {
-        radius <- wrap(params.require[NumericValue](_0).flatMap(v => requireReal(v.numericValue)))
-        _      <- controller.run(TurtleCommand.MoveBackward(radius))
-      } yield VoidValue
-    }
+    RuntimeFunction(TurtleFunctions.backward).native(unaryRealFunctionF { radius =>
+      controller.run(TurtleCommand.MoveBackward(radius)).as(VoidValue)
+    })
 
   private def pos(controller: TurtleController[F]) =
     RuntimeFunction(TurtleFunctions.pos).native {

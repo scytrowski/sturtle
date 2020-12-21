@@ -10,8 +10,9 @@ import com.github.scytrowski.sturtle.core.geometry.{Angle, Point}
 import com.github.scytrowski.sturtle.core.graphics.Color
 import com.github.scytrowski.sturtle.core.{TurtleCommand, TurtleController, TurtleQuery, TurtleQueryAnswer}
 import com.github.scytrowski.sturtle.tpl.fixture.{EffectSpecLike, RandomnessFixture, TableFixture}
-import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.RealNumberExpected
+import com.github.scytrowski.sturtle.tpl.interpreter.InterpreterError.IllegalParameter
 import com.github.scytrowski.sturtle.tpl.interpreter._
+import com.github.scytrowski.sturtle.tpl.types.Nat._0
 import com.github.scytrowski.sturtle.tpl.types.{Complex, Nat}
 import org.scalatest.Inside
 
@@ -38,7 +39,9 @@ class TurtleFunctionsModuleTest extends EffectSpecLike with RandomnessFixture wi
 
       "fail" in {
         forAll(Table("r", randomElements[Double](1000, _ != 0):_*)) { r =>
-          expectFailure()(TurtleFunctions.forward, NumberValue(Complex.imaginary(r))) mustBe RealNumberExpected
+          val value = NumberValue(Complex.imaginary(r))
+
+          expectFailure()(TurtleFunctions.forward, value) mustBe IllegalParameter(TurtleFunctions.forward, _0, value)
         }
       }
     }
@@ -55,7 +58,9 @@ class TurtleFunctionsModuleTest extends EffectSpecLike with RandomnessFixture wi
 
       "fail" in {
         forAll(Table("r", randomElements[Double](1000):_*)) { r =>
-          expectFailure()(TurtleFunctions.backward, NumberValue(Complex.imaginary(r))) mustBe RealNumberExpected
+          val value = NumberValue(Complex.imaginary(r))
+
+          expectFailure()(TurtleFunctions.backward, value) mustBe IllegalParameter(TurtleFunctions.backward, _0, value)
         }
       }
     }

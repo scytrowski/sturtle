@@ -5,6 +5,7 @@ import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.{ApplicativeError, MonadError}
+import com.github.scytrowski.sturtle.tpl.module.ParameterList
 import com.github.scytrowski.sturtle.tpl.types.{Nat, SizedList}
 
 sealed abstract class RuntimeObject[+F[_]] {
@@ -18,8 +19,6 @@ final case class RuntimeVariable(signature: VariableSignature, value: Value) ext
 }
 
 sealed abstract class RuntimeFunction[F[_]] extends RuntimeObject[F] {
-  override type S = FunctionSignature
-
   def invoke(interpreter: Interpreter[F, TPLCode], ctx: InterpreterContext[F]): F[InterpreterContext[F]]
 }
 
@@ -31,23 +30,27 @@ object RuntimeFunction {
 
     def const(value: Value): RuntimeFunction[F] = pure(_ => value)
 
-    def pure(f: SizedList.Aux[Value, PN] => Value): RuntimeFunction[F] = native(f.andThen(_.pure))
+    def pure(f: ParameterList.Aux[PN] => Value): RuntimeFunction[F] = native(f.andThen(_.pure))
 
-    def native(f: SizedList.Aux[Value, PN] => F[Value]): RuntimeFunction[F] =
+    def native(f: ParameterList.Aux[PN] => F[Value]): RuntimeFunction[F] =
       new Native[F, PN](sign.paramsN) {
-        override val signature: FunctionSignature = sign
+        override val signature: FunctionSignature.Aux[PN] = sign
 
         override protected def invokeN(params: ParamsList): F[Value] = f(params)
       }
   }
 
-  final case class Stored[F[_]](signature: FunctionSignature, code: TPLCode.WithExit) extends RuntimeFunction[F] {
+  final case class Stored[F[_], PN <: Nat](signature: FunctionSignature.Aux[PN], code: TPLCode.WithExit) extends RuntimeFunction[F] {
+    override type S = FunctionSignature.Aux[PN]
+
     override def invoke(interpreter: Interpreter[F, TPLCode], ctx: InterpreterContext[F]): F[InterpreterContext[F]] =
       interpreter.interpret(code, ctx)
   }
 
   sealed abstract class Native[F[_]: MonadError[*[_], Throwable], PN <: Nat](paramsN: PN) extends RuntimeFunction[F] {
-    final type ParamsList = SizedList.Aux[Value, PN]
+    override type S = FunctionSignature.Aux[PN]
+
+    final type ParamsList = ParameterList.Aux[PN]
 
     protected def invokeN(params: ParamsList): F[Value]
 
@@ -65,8 +68,10 @@ object RuntimeFunction {
           ctx.pop.flatMap { case (param, updatedCtx) =>
             popParamsRec(updatedCtx, param :: params, remaining - 1)
           }
-        else
-          Right(SizedList.wrap[Value, PN](params) -> ctx)
+        else {
+          val sizedList = SizedList.wrap[Value, PN](params)
+          Right(ParameterList(signature, sizedList) -> ctx)
+        }
 
       ApplicativeError[F, Throwable].fromEither {
         popParamsRec(ctx, List.empty, paramsN.value).leftMap(InterpreterException)

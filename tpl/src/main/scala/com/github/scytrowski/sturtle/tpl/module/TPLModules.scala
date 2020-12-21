@@ -13,6 +13,7 @@ object TPLModules {
       .map { controller =>
         List(
           new SpecialFunctionsModule[F].apply(),
+          new MathModule[F].apply(),
           new TurtleFunctionsModule[F].apply(controller),
         ) ++ config.customModules
       }

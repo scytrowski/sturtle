@@ -74,9 +74,51 @@ final case class Complex(real: Double, imaginary: Double) {
       None
   }
 
+  def **[N: ComplexNumeric](other: N): Complex = toPowerOf(other)
+  def toPowerOf[N: ComplexNumeric](other: N): Complex =
+    ln.fold(Complex.zero)(l => (l * other).exp)
+
+  def exp: Complex = Complex(Math.cos(imaginary), Math.sin(imaginary)) * Math.exp(real)
+
+  def log[N: ComplexNumeric](base: N): Option[Complex] = {
+    val baseComplex = ComplexNumeric[N].toComplex(base)
+    if (baseComplex.isValidLogBase)
+      for {
+        nominator   <- ln
+        denominator <- baseComplex.ln
+        res         <- nominator / denominator
+      } yield res
+    else
+      None
+  }
+
+  def ln: Option[Complex] =
+    if (!isZero)
+      Some(Complex(Math.log(abs), arg))
+    else
+      None
+
+  def sin: Complex =
+    Complex(
+      Math.sin(real) * Math.cosh(imaginary),
+      Math.cos(real) * Math.sinh(imaginary)
+    )
+
+  def cos: Complex =
+    Complex(
+      Math.cos(real) * Math.cosh(imaginary),
+      Math.sin(real) * Math.sinh(imaginary)
+    )
+
+  def isValidLogBase: Boolean = asReal.fold(true)(r => r > 0 && r != 1)
+
+  def isZero: Boolean = this == Complex.zero
+
   def conjugate: Complex = Complex(real, -imaginary)
 
   def abs: Double = Math.sqrt(real * real + imaginary * imaginary)
+
+  def arg: Double = Math.atan2(imaginary, real)
 
   override def toString: String =
     isReal -> isImaginary match {
@@ -85,13 +127,12 @@ final case class Complex(real: Double, imaginary: Double) {
       case (_, false)     => s"$real"
       case (true, true)   => "0"
     }
-
-
 }
 
 object Complex {
   val zero: Complex = real(0)
-  def one: Complex = real(0)
+  val one: Complex = real(1)
+  val unit: Complex = imaginary(1)
   def real(value: Double): Complex = Complex(value, 0)
   def imaginary(value: Double): Complex = Complex(0, value)
 
