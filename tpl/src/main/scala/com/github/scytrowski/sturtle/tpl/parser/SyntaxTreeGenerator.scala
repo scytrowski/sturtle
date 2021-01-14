@@ -6,15 +6,6 @@ import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
 import com.github.scytrowski.sturtle.tpl.types.Complex
 
 trait SyntaxTreeGenerator {
-  protected def repeat(times: Expression, body: Block, counter: Name = SpecialNames.temporaryVariable): Block =
-    Block(List(
-      assignment(counter, number(Complex.zero)),
-      loop(
-        lessOrEqual(counter, times),
-        Block(increment(counter) +: body.statements)
-      )
-    ))
-
   protected def loop(condition: Expression, body: Block): Loop = Loop(condition, body)
 
   protected def assignment(name: Name, value: Expression): Assignment =

@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.interpreter.VoidValue
 import com.github.scytrowski.sturtle.tpl.parser.ParseError._
@@ -35,7 +35,6 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       case Some(Token.Function) => functionDefinition.option
       case Some(Token.If) => branch.option
       case Some(Token.While) => loop(LoopType.While).option
-      case Some(Token.Repeat) => loop(LoopType.Repeat).option
       case Some(Token.Break) => drop(1) *> succeed(Break).option
       case Some(Token.Return) => `return`.option
       case Some(Token.NameToken(name)) => drop(1) *> functionCallOrAssignment(Name(name)).option
@@ -86,24 +85,13 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
   }
 
   private def loop(loopType: LoopType): P[SyntaxTree] =
-    loopType match {
-      case LoopType.While =>
-        for {
-          _         <- require(Token.While)
-          condition <- expression
-          _         <- require(Token.Do)
-          body      <- block
-          _         <- require(Token.End)
-        } yield Loop(condition, body)
-      case LoopType.Repeat =>
-        for {
-          _     <- require(Token.Repeat)
-          times <- expression
-          _     <- require(Token.Do)
-          body  <- block
-          _     <- require(Token.End)
-        } yield gen.repeat(times, body)
-    }
+    for {
+      _         <- require(Token.While)
+      condition <- expression
+      _         <- require(Token.Do)
+      body      <- block
+      _         <- require(Token.End)
+    } yield Loop(condition, body)
 
   private def `return`: P[SyntaxTree] =
     requireHead(Token.Return) *> peekOption.flatMap {

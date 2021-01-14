@@ -8,23 +8,6 @@ import com.github.scytrowski.sturtle.tpl.types.Complex
 
 class SyntaxTreeGeneratorTest extends CommonSpecLike with SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
   "SyntaxTreeGenerator" should {
-    "generate repeat" in {
-      val counter = Name("i")
-      val times = Name("n")
-      val body = Block(List(Break))
-
-      gen.repeat(times, body, counter) mustBe Block(List(
-        Assignment(counter, Static(NumberValue(Complex.zero))),
-        Loop(
-          FunctionCall(SpecialNames.lessOrEqual, List(counter, times)),
-          Block(
-            FunctionCall(SpecialNames.add, List(counter, Static(NumberValue(Complex.one)))) +:
-              body.statements
-          )
-        )
-      ))
-    }
-
     "generate loop" in {
       val condition = Name("p")
       val body = Block(List(Break))

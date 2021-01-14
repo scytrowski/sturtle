@@ -68,7 +68,6 @@ final class TPLLexer[F[_]](implicit monadError: MonadError[F, Throwable]) extend
       case "else" => Else
       case "then" => Then
       case "while" => While
-      case "repeat" => Repeat
       case "do" => Do
       case "break" => Break
       case "return" => Return

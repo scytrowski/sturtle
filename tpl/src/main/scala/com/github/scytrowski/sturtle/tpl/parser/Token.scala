@@ -16,7 +16,6 @@ object Token {
   case object Else extends Token
   case object Then extends Token
   case object While extends Token
-  case object Repeat extends Token
   case object Do extends Token
   case object Break extends Token
   case object Return extends Token

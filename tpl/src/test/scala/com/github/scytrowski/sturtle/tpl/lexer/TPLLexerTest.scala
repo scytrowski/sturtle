@@ -111,10 +111,6 @@ class TPLLexerTest extends EffectSpecLike with RandomnessFixture with TryValues 
       requireTokenized("while") { case While :: Nil => }
     }
 
-    "emit Repeat" in {
-      requireTokenized("repeat") { case Repeat :: Nil => }
-    }
-
     "emit Do" in {
       requireTokenized("do") { case Do :: Nil => }
     }

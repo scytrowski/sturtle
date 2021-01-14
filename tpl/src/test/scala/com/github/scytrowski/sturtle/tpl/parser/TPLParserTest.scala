@@ -2,13 +2,12 @@ package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.data.NonEmptyList
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree._
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Branch, Break, Expression, FunctionDefinition, Loop, Return}
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
-import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue, VoidValue}
+import com.github.scytrowski.sturtle.tpl.interpreter.VoidValue
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.{UnexpectedEndOfStream, UnexpectedToken}
-import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 
 class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside { gen: SyntaxTreeGenerator =>
@@ -161,27 +160,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
         Name("a"),
         Block(List(Break))
       )
-    }
-
-    "parse repeat" in {
-      val tokens = List(
-        Token.Repeat,
-        Token.NameToken("a"),
-        Token.Do,
-        Token.Break,
-        Token.End
-      )
-
-      inside(parseSingleStatement(tokens)) { case Block((counterAssignment: Assignment) :: (loop: Loop) :: Nil) =>
-        val counterName = counterAssignment.variableName
-
-        counterAssignment.value mustBe Static(NumberValue(Complex.zero))
-        loop.condition mustBe FunctionCall(SpecialNames.lessOrEqual, List(counterName, Name("a")))
-        loop.body mustBe Block(List(
-          FunctionCall(SpecialNames.add, List(counterName, Static(NumberValue(Complex.one)))),
-          Break
-        ))
-      }
     }
 
     "parse break" in {
@@ -358,15 +336,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
           expectFailure(tokens) mustBe UnexpectedEndOfStream
         }
 
-        "repeat block" in {
-          val tokens = List(
-            Token.Repeat,
-            Token.NameToken("a")
-          )
-
-          expectFailure(tokens) mustBe UnexpectedEndOfStream
-        }
-
         "name token" in {
           val tokens = List(Token.NameToken("a"))
 
@@ -375,9 +344,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
       }
     }
   }
-
-  private def parseExpression(tokens: List[Token]): Expression =
-    inside(parseSingleStatement(Token.Return +: tokens)) { case Return(expr) => expr }
 
   private def parseSingleStatement(tokens: List[Token]): SyntaxTree =
     inside(parse(tokens)) { case Block(st :: Nil) => st }
