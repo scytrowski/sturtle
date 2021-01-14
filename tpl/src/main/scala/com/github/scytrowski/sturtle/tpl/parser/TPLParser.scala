@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Assignment, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.interpreter.VoidValue
 import com.github.scytrowski.sturtle.tpl.parser.ParseError._
@@ -16,20 +16,20 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
 
   private def mainBlock: P[Block] =
     for {
-      b <- block
+      b <- block()
       _ <- requireEmpty
     } yield b
 
   private def explicitlyDefinedBlock: P[Block] =
     for {
       _ <- require(Token.Block)
-      b <- block
+      b <- block(Token.End)
       _ <- require(Token.End)
     } yield b
 
-  private def block: P[Block] = unfoldWhileDefined(statement).map(Block)
+  private def block(terminals: Token*): P[Block] = unfoldWhileDefined(statement(terminals:_*)).map(Block)
 
-  private def statement: P[Option[SyntaxTree]] =
+  private def statement(terminals: Token*): P[Option[SyntaxTree]] =
     trim(Token.EOL) *> peekOption.flatMap {
       case Some(Token.Block) => explicitlyDefinedBlock.option
       case Some(Token.Function) => functionDefinition.option
@@ -37,8 +37,9 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       case Some(Token.While) => loop(LoopType.While).option
       case Some(Token.Break) => drop(1) *> succeed(Break).option
       case Some(Token.Return) => `return`.option
-      case Some(Token.NameToken(name)) => drop(1) *> functionCallOrAssignment(Name(name)).option
-      case _ => succeed(None)
+      case Some(token) if terminals.contains(token) => succeed(None)
+      case None => succeed(None)
+      case _ => expression.option
     }
 
   private def functionDefinition: P[SyntaxTree] =
@@ -46,7 +47,7 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       _        <- require(Token.Function)
       funcName <- name
       params   <- parameterNameList
-      body     <- block
+      body     <- block(Token.End)
       _        <- require(Token.End)
     } yield FunctionDefinition(funcName, params, body)
 
@@ -77,13 +78,13 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       case None => succeed(None)
     }
 
-  def defaultCase: P[Case] = block.map(Case.Default)
+  def defaultCase: P[Case] = block(Token.End).map(Case.Default)
 
   def conditionalCase: P[Case] =
     for {
       condition <- expression
       _ <- require(Token.Then)
-      b <- block
+      b <- block(Token.Elif, Token.Else, Token.End)
     } yield Conditional(condition, b)
 
   private def loop(loopType: LoopType): P[SyntaxTree] =
@@ -91,7 +92,7 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       _         <- require(Token.While)
       condition <- expression
       _         <- require(Token.Do)
-      body      <- block
+      body      <- block(Token.End)
       _         <- require(Token.End)
     } yield Loop(condition, body)
 
@@ -100,19 +101,6 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       case Some(Token.Elif | Token.Else | Token.End | Token.EOL) | None => succeed(Return(Static(VoidValue)))
       case _ => expression.map(Return)
     }
-
-  private def functionCallOrAssignment(name: Name): P[SyntaxTree] =
-    peek.flatMap {
-      case Token.RoundBracketOpen => functionCall(name)
-      case Token.EqualsSign => assignment(name)
-      case unexpected => fail(UnexpectedToken(unexpected, List(Token.RoundBracketOpen, Token.EqualsSign)))
-    }
-
-  private def assignment(name: Name): P[SyntaxTree] =
-    for {
-      _    <- require(Token.EqualsSign)
-      expr <- expression
-    } yield Assignment(name, expr)
 
   private def parameterNameList: P[List[Name]] =
     parameterList(BracketType.Round).flatMap(_

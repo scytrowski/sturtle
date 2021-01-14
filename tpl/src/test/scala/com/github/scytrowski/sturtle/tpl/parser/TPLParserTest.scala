@@ -263,12 +263,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
     }
 
     "fail" when {
-      "unexpected token" in {
-        val token = Token.StringToken("a")
-
-        expectFailure(List(token)) mustBe UnexpectedToken(token)
-      }
-
       "unexpected end of stream" when {
         "block" in {
           val tokens = List(Token.Block)
@@ -331,12 +325,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
             Token.While,
             Token.NameToken("a")
           )
-
-          expectFailure(tokens) mustBe UnexpectedEndOfStream
-        }
-
-        "name token" in {
-          val tokens = List(Token.NameToken("a"))
 
           expectFailure(tokens) mustBe UnexpectedEndOfStream
         }

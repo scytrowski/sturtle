@@ -1,7 +1,7 @@
 package com.github.scytrowski.sturtle.tpl.parser.expression
 
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
 import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue}
 import com.github.scytrowski.sturtle.tpl.parser.ParseError.InvalidBracketConstruction
 import com.github.scytrowski.sturtle.tpl.parser.Token.{NameToken, RoundBracketOpen}
@@ -50,6 +50,8 @@ object ExpressionParser extends TokenParser[Expression] { gen: SyntaxTreeGenerat
       case _ => succeed[Expression](name)
     }
   }
+
+  protected def functionCall(name: Name): P[FunctionCall] = parameterList(BracketType.Round).map(FunctionCall(name, _))
 
   private def roundBracket: P[Expression] =
     parameterList(BracketType.Round).flatMap {

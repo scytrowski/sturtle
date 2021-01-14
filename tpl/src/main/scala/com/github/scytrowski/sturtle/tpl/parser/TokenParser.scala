@@ -6,8 +6,6 @@ import com.github.scytrowski.sturtle.tpl.parser.ParseError.UnexpectedToken
 import com.github.scytrowski.sturtle.tpl.parser.expression.ExpressionParser
 
 trait TokenParser[+A] extends Parser[Token, ParseError, A] with TokenParserFactory with SyntaxTreeGenerator {
-  protected def functionCall(name: Name): P[FunctionCall] = parameterList(BracketType.Round).map(FunctionCall(name, _))
-
   protected def parameterList(bracketType: BracketType): P[List[Expression]] = {
     val parameters = unfoldWhileDefinedS(true) {
       case true =>

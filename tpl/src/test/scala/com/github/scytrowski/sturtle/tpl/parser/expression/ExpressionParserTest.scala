@@ -1,11 +1,10 @@
 package com.github.scytrowski.sturtle.tpl.parser.expression
 
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Block, Expression, Return}
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
 import com.github.scytrowski.sturtle.tpl.interpreter.{BooleanValue, NumberValue, StringValue}
-import com.github.scytrowski.sturtle.tpl.parser.{SyntaxTreeGenerator, TPLParser, Token}
+import com.github.scytrowski.sturtle.tpl.parser.{SyntaxTreeGenerator, Token}
 import com.github.scytrowski.sturtle.tpl.types.Complex
 import org.scalatest.Inside
 
@@ -15,25 +14,25 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
       "name" in {
         val tokens = List(Token.NameToken("a"))
 
-        parseExpression(tokens) mustBe Name("a")
+        parse(tokens) mustBe Name("a")
       }
 
       "boolean" in {
         val tokens = List(Token.BooleanToken(true))
 
-        parseExpression(tokens) mustBe Static(BooleanValue(true))
+        parse(tokens) mustBe Static(BooleanValue(true))
       }
 
       "number" in {
         val tokens = List(Token.NumberToken(Complex.real(1337)))
 
-        parseExpression(tokens) mustBe Static(NumberValue(Complex.real(1337)))
+        parse(tokens) mustBe Static(NumberValue(Complex.real(1337)))
       }
 
       "string" in {
         val tokens = List(Token.StringToken("abcdefgh123456"))
 
-        parseExpression(tokens) mustBe Static(StringValue("abcdefgh123456"))
+        parse(tokens) mustBe Static(StringValue("abcdefgh123456"))
       }
 
       "point" in {
@@ -45,7 +44,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.RoundBracketClose
         )
 
-        parseExpression(tokens) mustBe gen.point(
+        parse(tokens) mustBe gen.point(
           Static(NumberValue(Complex.real(1.23))),
           Static(NumberValue(Complex.real(4.56)))
         )
@@ -60,7 +59,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.SquareBracketClose
         )
 
-        parseExpression(tokens) mustBe gen.vector(
+        parse(tokens) mustBe gen.vector(
           Static(NumberValue(Complex.real(9.87))),
           Static(NumberValue(Complex.real(6.54)))
         )
@@ -77,7 +76,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.CurlyBracketClose
         )
 
-        parseExpression(tokens) mustBe gen.color(
+        parse(tokens) mustBe gen.color(
           Name("r"),
           Name("g"),
           Name("b")
@@ -91,7 +90,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.RoundBracketClose
         )
 
-        parseExpression(tokens) mustBe Name("a")
+        parse(tokens) mustBe Name("a")
       }
 
       "with prefix plus" in {
@@ -100,7 +99,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("a")
         )
 
-        parseExpression(tokens) mustBe gen.plus(Name("a"))
+        parse(tokens) mustBe gen.plus(Name("a"))
       }
 
       "with prefix minus" in {
@@ -109,7 +108,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("a")
         )
 
-        parseExpression(tokens) mustBe gen.minus(Name("a"))
+        parse(tokens) mustBe gen.minus(Name("a"))
       }
 
       "with addition" in {
@@ -119,7 +118,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.add(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.add(Name("a"), Name("b"))
       }
 
       "with subtraction" in {
@@ -129,7 +128,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.subtract(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.subtract(Name("a"), Name("b"))
       }
 
       "with multiplication" in {
@@ -139,7 +138,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.multi(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.multi(Name("a"), Name("b"))
       }
 
       "with division" in {
@@ -149,7 +148,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.div(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.div(Name("a"), Name("b"))
       }
 
       "with assignment" in {
@@ -159,7 +158,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.assignment(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.assignment(Name("a"), Name("b"))
       }
 
       "with equal to" in {
@@ -170,7 +169,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.equal(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.equal(Name("a"), Name("b"))
       }
 
       "with not equal to" in {
@@ -181,7 +180,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.notEqual(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.notEqual(Name("a"), Name("b"))
       }
 
       "with less than" in {
@@ -191,7 +190,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.less(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.less(Name("a"), Name("b"))
       }
 
       "with less or equal to" in {
@@ -202,7 +201,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.lessOrEqual(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.lessOrEqual(Name("a"), Name("b"))
       }
 
       "with greater than" in {
@@ -212,7 +211,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.greater(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.greater(Name("a"), Name("b"))
       }
 
       "with greater or equal to" in {
@@ -223,7 +222,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.greaterOrEqual(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.greaterOrEqual(Name("a"), Name("b"))
       }
 
       "with negation" in {
@@ -232,7 +231,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("a")
         )
 
-        parseExpression(tokens) mustBe gen.negate(Name("a"))
+        parse(tokens) mustBe gen.negate(Name("a"))
       }
 
       "with logical and" in {
@@ -242,7 +241,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.and(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.and(Name("a"), Name("b"))
       }
 
       "with logical or" in {
@@ -252,7 +251,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.NameToken("b")
         )
 
-        parseExpression(tokens) mustBe gen.or(Name("a"), Name("b"))
+        parse(tokens) mustBe gen.or(Name("a"), Name("b"))
       }
 
       "function call" in {
@@ -265,7 +264,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
           Token.RoundBracketClose
         )
 
-        parseSingleStatement(tokens) mustBe FunctionCall(
+        parse(tokens) mustBe FunctionCall(
           Name("f"),
           List(Name("a"), Name("b"))
         )
@@ -283,7 +282,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
             Token.RoundBracketClose
           )
 
-          parseSingleStatement(tokens) mustBe FunctionCall(
+          parse(tokens) mustBe FunctionCall(
             Name("f"),
             List(FunctionCall(
               Name("g"),
@@ -302,7 +301,7 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
             Token.RoundBracketClose
           )
 
-          parseSingleStatement(tokens) mustBe FunctionCall(
+          parse(tokens) mustBe FunctionCall(
             Name("f"),
             List(gen.multi(Name("x"), Name("y")))
           )
@@ -311,14 +310,8 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
     }
   }
 
-  private def parseExpression(tokens: List[Token]): Expression =
-    inside(parseSingleStatement(Token.Return +: tokens)) { case Return(expr) => expr }
-
-  private def parseSingleStatement(tokens: List[Token]): SyntaxTree =
-    inside(parse(tokens)) { case Block(st :: Nil) => st }
-
-  private def parse(tokens: List[Token]): SyntaxTree =
-    inside(TPLParser.parse(tokens).toEither) { case Right((result, remaining)) =>
+  private def parse(tokens: List[Token]): Expression =
+    inside(ExpressionParser.parse(tokens).toEither) { case Right((result, remaining)) =>
       remaining.isEmpty mustBe true
 
       result
