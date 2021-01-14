@@ -152,9 +152,20 @@ class ExpressionParserTest extends EffectSpecLike with SyntaxTreeGenerator with 
         parseExpression(tokens) mustBe gen.div(Name("a"), Name("b"))
       }
 
+      "with assignment" in {
+        val tokens = List(
+          Token.NameToken("a"),
+          Token.EqualsSign,
+          Token.NameToken("b")
+        )
+
+        parseExpression(tokens) mustBe gen.assignment(Name("a"), Name("b"))
+      }
+
       "with equal to" in {
         val tokens = List(
           Token.NameToken("a"),
+          Token.EqualsSign,
           Token.EqualsSign,
           Token.NameToken("b")
         )

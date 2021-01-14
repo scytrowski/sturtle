@@ -1,7 +1,7 @@
 package com.github.scytrowski.sturtle.tpl.parser
 
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{FunctionCall, Name, Static}
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Assignment, Block, Expression, Loop}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Assignment, FunctionCall, Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.{Block, Expression, Loop}
 import com.github.scytrowski.sturtle.tpl.interpreter.NumberValue
 import com.github.scytrowski.sturtle.tpl.types.Complex
 

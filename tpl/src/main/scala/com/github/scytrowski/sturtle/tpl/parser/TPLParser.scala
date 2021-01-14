@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Assignment, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.interpreter.VoidValue
 import com.github.scytrowski.sturtle.tpl.parser.ParseError._
@@ -51,22 +51,22 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
     } yield FunctionDefinition(funcName, params, body)
 
   private def branch: P[SyntaxTree] = {
-    def defaultCase: P[Case] = block.map(Case.Default)
+    for {
+      _     <- require(Token.If)
+      cs    <- branchCases
+      csNel <- nel(EmptyBranch)(cs)
+    } yield Branch(csNel)
+  }
 
-    def conditionalCase: P[Case] =
-      for {
-        condition <- expression
-        _ <- require(Token.Then)
-        b <- block
-      } yield Conditional(condition, b)
-
-    val cases = unfoldWhileDefinedS[Option[CaseType], Case](Some(CaseType.Conditional)) {
+  private val branchCases: P[List[Case]] =
+    unfoldWhileDefinedS[Option[CaseType], Case](Some(CaseType.Conditional)) {
       case Some(CaseType.Conditional) =>
         conditionalCase.flatMap { c =>
           head.flatMap {
             case Token.Elif => succeed(Some(CaseType.Conditional) -> c).option
             case Token.Else => succeed(Some(CaseType.Default) -> c).option
             case Token.End => succeed(None -> c).option
+            case unexpected => fail(UnexpectedToken(unexpected, List(Token.Elif, Token.Elif, Token.End)))
           }
         }
       case Some(CaseType.Default) =>
@@ -77,12 +77,14 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
       case None => succeed(None)
     }
 
+  def defaultCase: P[Case] = block.map(Case.Default)
+
+  def conditionalCase: P[Case] =
     for {
-      _     <- require(Token.If)
-      cs    <- cases
-      csNel <- nel(EmptyBranch)(cs)
-    } yield Branch(csNel)
-  }
+      condition <- expression
+      _ <- require(Token.Then)
+      b <- block
+    } yield Conditional(condition, b)
 
   private def loop(loopType: LoopType): P[SyntaxTree] =
     for {
@@ -102,13 +104,13 @@ object TPLParser extends TokenParser[SyntaxTree] { gen: SyntaxTreeGenerator =>
   private def functionCallOrAssignment(name: Name): P[SyntaxTree] =
     peek.flatMap {
       case Token.RoundBracketOpen => functionCall(name)
-      case Token.Colon => assignment(name)
-      case unexpected => fail(UnexpectedToken(unexpected))
+      case Token.EqualsSign => assignment(name)
+      case unexpected => fail(UnexpectedToken(unexpected, List(Token.RoundBracketOpen, Token.EqualsSign)))
     }
 
   private def assignment(name: Name): P[SyntaxTree] =
     for {
-      _    <- require(Token.Colon, Token.EqualsSign)
+      _    <- require(Token.EqualsSign)
       expr <- expression
     } yield Assignment(name, expr)
 

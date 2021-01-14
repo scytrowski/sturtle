@@ -73,7 +73,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
           generateSingleInstruction(definition) mustBe DefineFunction(
             FunctionSignature(name.value, _3),
             TPLCode(
-              parameters.toList.map(p => VariableSignature(p.value)).map(PopTo).reverse :+ ExitLoop:_*
+              parameters.map(p => VariableSignature(p.value)).map(PopTo).reverse :+ ExitLoop:_*
             ).withExit(PushValue(VoidValue))
           )
         }
@@ -95,7 +95,7 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
           generateSingleInstruction(definition) mustBe DefineFunction(
             FunctionSignature(name.value, _3),
             TPLCode(
-              parameters.toList.map(p => VariableSignature(p.value)).map(PopTo).reverse:_*
+              parameters.map(p => VariableSignature(p.value)).map(PopTo).reverse:_*
             ).withExit(PushValue(returnValue))
           )
         }
@@ -210,9 +210,10 @@ class TPLCodeGeneratorTest extends CommonSpecLike with Inside {
         val variableName = "a"
         val valueName = "b"
 
-        generate(SyntaxTree.Assignment(Expression.Name(variableName), Expression.Name(valueName))) mustBe List(
+        generate(Expression.Assignment(Expression.Name(variableName), Expression.Name(valueName))) mustBe List(
           PushFrom(VariableSignature(valueName)),
-          PopTo(VariableSignature(variableName))
+          PopTo(VariableSignature(variableName)),
+          PushFrom(VariableSignature(variableName))
         )
       }
 

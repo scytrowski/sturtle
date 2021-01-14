@@ -2,7 +2,7 @@ package com.github.scytrowski.sturtle.tpl.parser
 
 import cats.data.NonEmptyList
 import com.github.scytrowski.sturtle.tpl.codegen.Case.Conditional
-import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Name, Static}
+import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree.Expression.{Assignment, Name, Static}
 import com.github.scytrowski.sturtle.tpl.codegen.SyntaxTree._
 import com.github.scytrowski.sturtle.tpl.codegen.{Case, SyntaxTree}
 import com.github.scytrowski.sturtle.tpl.fixture.EffectSpecLike
@@ -241,7 +241,6 @@ class TPLParserTest extends EffectSpecLike with SyntaxTreeGenerator with Inside 
     "parse assignment" in {
       val tokens = List(
         Token.NameToken("a"),
-        Token.Colon,
         Token.EqualsSign,
         Token.NameToken("b")
       )

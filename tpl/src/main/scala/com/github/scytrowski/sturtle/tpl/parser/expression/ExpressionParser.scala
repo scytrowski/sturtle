@@ -21,31 +21,28 @@ object ExpressionParser extends TokenParser[Expression] { gen: SyntaxTreeGenerat
   private def expressionElements: P[List[ExpressionToken]] =
     unfoldWhileDefinedS(true) { allowPrefixOperators =>
       peekOption.flatMap {
-        case Some(Token.NameToken(name)) => nameOrFunctionCall(Name(name)).map(t => false -> Left(t)).option
-        case Some(Token.BooleanToken(value)) => drop(1).as(false -> Left(Static(BooleanValue(value)))).option
-        case Some(Token.NumberToken(value)) => drop(1).as(false -> Left(Static(NumberValue(value)))).option
-        case Some(Token.StringToken(value)) => drop(1).as(false -> Left(Static(StringValue(value)))).option
-        case Some(Token.RoundBracketOpen) => roundBracket.map(false -> Left(_)).option
-        case Some(Token.SquareBracketOpen) => squareBracket.map(false -> Left(_)).option
-        case Some(Token.CurlyBracketOpen) => curlyBracket.map(false -> Left(_)).option
-        case Some(Token.EqualsSign) => drop(1).as(true -> Right(Operator.Equal)).option
-        case Some(Token.LessThanSign) => lessOperator.map(true -> Right(_)).option
-        case Some(Token.GreaterThanSign) => greaterOperator.map(true -> Right(_)).option
-        case Some(Token.Not) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Negate)).option
-        case Some(Token.And) => drop(1).as(true -> Right(Operator.And)).option
-        case Some(Token.Or) => drop(1).as(true -> Right(Operator.Or)).option
-        case Some(Token.Plus) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Plus)).option
-        case Some(Token.Plus) => drop(1).as(true -> Right(Operator.Add)).option
-        case Some(Token.Minus) if allowPrefixOperators => drop(1).as(false -> Right(Operator.Minus)).option
-        case Some(Token.Minus) => drop(1).as(true -> Right(Operator.Subtract)).option
-        case Some(Token.Star) => drop(1).as(true -> Right(Operator.Multiply)).option
-        case Some(Token.Slash) => drop(1).as(true -> Right(Operator.Divide)).option
+        case Some(Token.NameToken(name)) => nameOrFunctionCall(Name(name)).map(t => false -> ValueToken(t)).option
+        case Some(Token.BooleanToken(value)) => drop(1).as(false -> ValueToken(Static(BooleanValue(value)))).option
+        case Some(Token.NumberToken(value)) => drop(1).as(false -> ValueToken(Static(NumberValue(value)))).option
+        case Some(Token.StringToken(value)) => drop(1).as(false -> ValueToken(Static(StringValue(value)))).option
+        case Some(Token.RoundBracketOpen) => roundBracket.map(false -> ValueToken(_)).option
+        case Some(Token.SquareBracketOpen) => squareBracket.map(false -> ValueToken(_)).option
+        case Some(Token.CurlyBracketOpen) => curlyBracket.map(false -> ValueToken(_)).option
+        case Some(Token.EqualsSign) => equalToOperatorOrAssignment.map(true -> OperatorToken(_)).option
+        case Some(Token.LessThanSign) => lessOperator.map(true -> OperatorToken(_)).option
+        case Some(Token.GreaterThanSign) => greaterOperator.map(true -> OperatorToken(_)).option
+        case Some(Token.Not) if allowPrefixOperators => drop(1).as(false -> OperatorToken(Operator.Negate)).option
+        case Some(Token.And) => drop(1).as(true -> OperatorToken(Operator.And)).option
+        case Some(Token.Or) => drop(1).as(true -> OperatorToken(Operator.Or)).option
+        case Some(Token.Plus) if allowPrefixOperators => drop(1).as(false -> OperatorToken(Operator.Plus)).option
+        case Some(Token.Plus) => drop(1).as(true -> OperatorToken(Operator.Add)).option
+        case Some(Token.Minus) if allowPrefixOperators => drop(1).as(false -> OperatorToken(Operator.Minus)).option
+        case Some(Token.Minus) => drop(1).as(true -> OperatorToken(Operator.Subtract)).option
+        case Some(Token.Star) => drop(1).as(true -> OperatorToken(Operator.Multiply)).option
+        case Some(Token.Slash) => drop(1).as(true -> OperatorToken(Operator.Divide)).option
         case _ => succeed(None)
       }
-    }.map(_.map {
-      case Left(expr) => ValueToken(expr)
-      case Right(op)  => OperatorToken(op)
-    })
+    }
 
   private def nameOrFunctionCall(name: Name): P[Expression] = {
     requireHead(NameToken(name.value)) *> peekOption.flatMap {
@@ -72,6 +69,14 @@ object ExpressionParser extends TokenParser[Expression] { gen: SyntaxTreeGenerat
       case first :: second :: third :: Nil => succeed(gen.color(first, second, third))
       case _ => fail(InvalidBracketConstruction(BracketType.Curly))
     }
+
+  private def equalToOperatorOrAssignment: P[Operator] =
+    require(Token.EqualsSign)
+      .flatMap(_ => peek)
+      .flatMap {
+        case Token.EqualsSign => drop(1).map(_ => Operator.Equal)
+        case _ => succeed(Operator.Assignment)
+      }
 
   private def lessOperator: P[Operator] =
     require(Token.LessThanSign)

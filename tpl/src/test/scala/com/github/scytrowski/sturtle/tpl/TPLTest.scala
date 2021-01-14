@@ -94,14 +94,14 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
           val source =
             s"""
                |function fib(n)
-               |   a := 0
-               |   b := 1
-               |   i := 0
+               |   a = 0
+               |   b = 1
+               |   i = 0
                |   while i < n do
-               |      t := b
-               |      b := a + b
-               |      a := t
-               |      i := i + 1
+               |      t = b
+               |      b = a + b
+               |      a = t
+               |      i = i + 1
                |   end
                |   return a
                |end
@@ -111,7 +111,7 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
 
           val (ctx, _) = run(source)
 
-          ctx.stack.asLazyList.toList mustBe List(NumberValue(Complex.real(fibs(n))))
+          ctx.stack.asLazyList.toList.head mustBe NumberValue(Complex.real(fibs(n)))
         }
       }
 
@@ -122,9 +122,9 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
           val source =
             s"""
                |function fib(n)
-               |   if n = 0 then
+               |   if n == 0 then
                |      return 0
-               |   elif n = 1 then
+               |   elif n == 1 then
                |      return 1
                |   else
                |      return fib(n - 1) + fib(n - 2)
@@ -152,11 +152,11 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
           val source =
             s"""
                |function fact(n)
-               |   r := 1
-               |   i := 2
+               |   r = 1
+               |   i = 2
                |   while i <= n do
-               |      r := r * i
-               |      i := i + 1
+               |      r = r * i
+               |      i = i + 1
                |   end
                |   return r
                |end
@@ -166,7 +166,7 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
 
           val (ctx, _) = run(source)
 
-          ctx.stack.asLazyList.toList mustBe List(NumberValue(Complex.real(facts(n))))
+          ctx.stack.asLazyList.toList.head mustBe NumberValue(Complex.real(facts(n)))
         }
       }
 
@@ -177,7 +177,7 @@ class TPLTest extends EffectSpecLike with RandomnessFixture with TableFixture {
           val source =
             s"""
                |function fact(n)
-               |   if n = 1 then
+               |   if n == 1 then
                |      return 1
                |   else
                |      return n * fact(n - 1)

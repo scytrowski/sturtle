@@ -23,6 +23,13 @@ object Operator extends SyntaxTreeGenerator { gen: SyntaxTreeGenerator =>
     }
   }
 
+  case object Assignment extends Operator(1) {
+    override def parse: ParseExpressions[Expression] = {
+      case value :: (name: Expression.Name) :: tail => ParseResult.Success(Expression.Assignment(name, value), tail)
+      case _ => ParseResult.Failure(UnexpectedEndOfStream)
+    }
+  }
+
   case object And extends BinaryOperator(1, gen.and)
   case object Or extends BinaryOperator(1, gen.or)
   case object Negate extends UnaryOperator(2, gen.negate)

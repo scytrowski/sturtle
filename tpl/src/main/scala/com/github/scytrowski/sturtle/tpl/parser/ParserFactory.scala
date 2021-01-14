@@ -95,7 +95,7 @@ trait TokenParserFactory extends ParserFactory[Token, ParseError] {
       if (h == token)
         succeed(())
       else
-        fail(ParseError.UnexpectedToken(h, Some(token)))
+        fail(ParseError.UnexpectedToken(h, List(token)))
     }
 
   protected val requireEmpty: P[Unit] =

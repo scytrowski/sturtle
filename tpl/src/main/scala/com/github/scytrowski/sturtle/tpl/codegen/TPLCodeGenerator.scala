@@ -12,7 +12,6 @@ object TPLCodeGenerator {
     case definition: SyntaxTree.FunctionDefinition => generateForFunctionDefinition(definition)
     case branch: SyntaxTree.Branch => generateForBranch(branch)
     case loop: SyntaxTree.Loop => generateForLoop(loop)
-    case assignment: SyntaxTree.Assignment => generateForAssignment(assignment)
     case ret: SyntaxTree.Return => generateForReturn(ret)
     case SyntaxTree.Break => generateForBreak
   }
@@ -22,7 +21,7 @@ object TPLCodeGenerator {
 
   private def generateForFunctionDefinition(definition: SyntaxTree.FunctionDefinition): TPLCode = {
     val signature = FunctionSignature(definition.name.value, definition.parameters.lengthN)
-    val parameterSignatures = definition.parameters.toList.map(p => VariableSignature(p.value))
+    val parameterSignatures = definition.parameters.map(p => VariableSignature(p.value))
     val popParameters = TPLCode(parameterSignatures.reverse.map(PopTo):_*)
     val code = (popParameters ++ generate(definition.body)).requireExit(PushValue(VoidValue))
     TPLCode(DefineFunction(signature, code))
@@ -49,11 +48,6 @@ object TPLCodeGenerator {
     TPLCode(Loop(condition, body))
   }
 
-  private def generateForAssignment(assignment: SyntaxTree.Assignment): TPLCode = {
-    val signature = VariableSignature( assignment.variableName.value)
-    generate(assignment.value) :+ PopTo(signature)
-  }
-
   private def generateForReturn(ret: SyntaxTree.Return): TPLCode =
     generateForExpression(ret.expression).asExit
 
@@ -66,6 +60,9 @@ object TPLCodeGenerator {
       case Expression.FunctionCall(name, parameters) =>
         val signature = FunctionSignature(name.value, parameters.lengthN)
         generateAggregated(parameters).withPush(Invoke(signature))
+      case Expression.Assignment(name, value) =>
+        val signature = VariableSignature(name.value)
+        (generate(value) :+ PopTo(signature)).withPush(PushFrom(signature))
     }
 
   private def generateAggregated(nodes: List[SyntaxTree]): TPLCode =
